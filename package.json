@@ -1,25 +1,25 @@
 {
-  "name": "codespaces-react",
-  "version": "0.1.0",
+  "name": "turbo-space-zero",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "dependencies": {
-    "@blueprintjs/core": "^5.10.3",
-    "@testing-library/jest-dom": "^6.4.5",
-    "@testing-library/react": "^15.0.7",
-    "@testing-library/user-event": "^14.4.3",
-    "dexie": "^4.0.7",
-    "dexie-react-hooks": "^1.1.7",
-    "html2canvas": "^1.4.1",
-    "react": "^18.3.1",
-    "react-color": "^2.19.3",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.23.1",
-    "styled-components": "^6.1.11",
-    "web-vitals": "^4.0.1"
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "idb-keyval": "^6.2.5",
+    "konva": "^10.2.5",
+    "modern-normalize": "^3.0.1",
+    "react": "^19.2.4",
+    "react-colorful": "^5.8.0",
+    "react-dom": "^19.2.4",
+    "react-konva": "^19.2.3",
+    "styled-components": "^6.3.12",
+    "three": "^0.184.0"
   },
   "overrides": {
-    "@svgr/webpack": "^8.0.1",
     "@adobe/css-tools": "^4.3.1",
     "postcss": "^8.4.31"
   },
@@ -30,28 +30,10 @@
     "test": "vitest",
     "test:update": "vitest -u"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.0",
-    "jsdom": "^24.1.0",
-    "vite": "^5.2.12",
-    "vitest": "^1.6.0"
+    "@vitejs/plugin-react": "^6.0.1",
+    "jsdom": "^29.0.1",
+    "vite": "^8.0.3",
+    "vitest": "^4.1.2"
   }
 }

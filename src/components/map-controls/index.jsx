@@ -1,186 +1,202 @@
-import { useEffect, useState } from 'react';
-import { Button, FormGroup, Popover, Section } from '@blueprintjs/core';
-import { ChromePicker } from 'react-color';
+import MenuBar from '../menu-bar';
+import CollapsibleSection from './CollapsibleSection';
+import MapSectionContent from './MapSectionContent';
+import RoomSectionContent from './RoomSectionContent';
+import LayerSectionContent from './LayerSectionContent';
+import GenerateSectionContent from './GenerateSectionContent';
 
 import {
   MapControlWrapper,
-  MapControlLabel,
-  MapControlSlider,
-  MapButtonGroupExits,
-  MapControlButtonExit,
-  MapRoomSymbol
 } from './style.js';
+import { EMPTY_SET } from '../map-view/utils';
 
-function MapControls (props) {
+function MapControls(props) {
   const {
     mapData = [],
     focusX = 0,
     focusY = 0,
     handleControlRoomValue,
     handleControlRoomToggle,
-  } = { ...props };
+    showGrid = true,
+    onToggleGrid,
+    showChunks = false,
+    onToggleChunks,
+    darkMode = true,
+    onToggleDarkMode,
+    is3DView = false,
+    onToggle3DView,
+    splitView = false,
+    onToggleSplitView,
+    cellSize = 40,
+    onCellSizeChange,
+    mapName = '',
+    onMapNameCommit,
+    mapCreated,
+    mapEdited,
+    roomCountActive = 0,
+    roomCountTotal = 0,
+    linkCountActive = 0,
+    linkCountTotal = 0,
+    mapKbSize = '0.0',
+    onSave,
+    onExport,
+    isQuillMode = false,
+    onNavigate,
+    sidebarOpen = false,
+    textInputRef,
+    selectedCells = EMPTY_SET,
+    onNudge,
+    elasticNudge = false,
+    onToggleElasticNudge,
+    onTransform,
+    onLayerMove,
+    onGenerate,
+    mapWidth = 25,
+    mapHeight = 25,
+    maxMapSize = 100,
+    onExtendMap,
+    onExitToggle,
+    onExitColorChange,
+    layers = [],
+    focusLayer = 0,
+    onLayerChange,
+    onLayerAdd,
+    onLayerDelete,
+    onLayerRename,
+    onLayerReorder,
+    defaultLayer = 0,
+    onDefaultLayerChange,
+    tilingMode = 'single',
+    onTilingModeChange,
+    onCut,
+    onCopy,
+    onPaste,
+    onClear,
+    onUndo,
+    onRedo,
+    canUndo = false,
+    canRedo = false,
+    theme,
+  } = props;
 
-  const [ enabled, setEnabled ] = useState(false);
-  const [ borderRadius, setBorderRadius ] = useState(0);
-  const [ borderWidth, setBorderWidth ] = useState(2);
-  const [ borderColor, setBorderColor ] = useState('#666666');
-  const [ fillColor, setFillColor ] = useState('#999999');
-  const [ exitNorth, setExitNorth ] = useState(false);
-  const [ exitNortheast, setExitNortheast ] = useState(false);
-  const [ exitEast, setExitEast ] = useState(false);
-  const [ exitSoutheast, setExitSoutheast ] = useState(false);
-  const [ exitSouth, setExitSouth ] = useState(false);
-  const [ exitSouthwest, setExitSouthwest ] = useState(false);
-  const [ exitWest, setExitWest ] = useState(false);
-  const [ exitNorthwest, setExitNorthwest ] = useState(false);
-
-  let room = mapData?.[focusX]?.[focusY] || {};
-  useEffect(() => {
-    room = mapData?.[focusX]?.[focusY] || {};
-
-    setEnabled(room.enabled !== undefined ? room.enabled : false);
-    setExitNorth(room.northEnabled !== undefined ? room.northEnabled : false);
-    setExitNortheast(room.northeastEnabled !== undefined ? room.northeastEnabled : false);
-    setExitEast(room.eastEnabled !== undefined ? room.eastEnabled : false);
-    setExitSoutheast(room.southeastEnabled !== undefined ? room.southeastEnabled : false);
-    setExitSouth(room.southEnabled !== undefined ? room.southEnabled : false);
-    setExitSouthwest(room.southwestEnabled !== undefined ? room.southwestEnabled : false);
-    setExitWest(room.westEnabled !== undefined ? room.westEnabled : false);
-    setExitNorthwest(room.northwestEnabled !== undefined ? room.northwestEnabled : false);
-
-    setBorderRadius(room.borderRadius !== undefined ? room.borderRadius : 50);
-    setBorderWidth(room.borderWidth !== undefined ? room.borderWidth : 2);
-    setBorderColor(room.borderColor !== undefined ? room.borderColor : '#666666');
-    setFillColor(room.fillColor !== undefined ? room.fillColor : '#999999');
-
-    console.log('Room focused', room);
-  }, [ focusX, focusY, mapData ]);
-
-  const borderColorPopover = () => {
-    return (
-      <Popover>
-        <ChromePicker
-          color={borderColor}
-          onChange={e => handleControlRoomValue('borderColor', e.hex)}
-        />
-      </Popover>
-    );
-  };
-  const fillColorPopover = () => {
-    return (
-      <Popover>
-        <ChromePicker
-          color={fillColor}
-          onChange={e => handleControlRoomValue('fillColor', e.hex)}
-        />
-      </Popover>
-    );
-  };
+  const room = mapData?.[focusX]?.[focusY] ?? {};
 
   return (
-    <MapControlWrapper>
-      <Section>
-        <MapControlLabel>Room and Links</MapControlLabel>
-        <MapButtonGroupExits>
-          <MapControlButtonExit
-            intent={exitNorthwest ? 'primary' : null} icon='arrow-top-left'
-            onClick={e => handleControlRoomToggle('northwestEnabled')}
-          />
-          <MapControlButtonExit
-            intent={exitNorth ? 'primary' : null} icon='arrow-up'
-            onClick={e => handleControlRoomToggle('northEnabled')}
-          />
-          <MapControlButtonExit
-            intent={exitNortheast ? 'primary' : null} icon='arrow-top-right'
-            onClick={e => handleControlRoomToggle('northeastEnabled')}
-          />
-          <MapControlButtonExit
-            intent={exitWest ? 'primary' : null} icon='arrow-left'
-            onClick={e => handleControlRoomToggle('westEnabled')}
-          />
-          <MapControlButtonExit
-            intent={room?.enabled ? 'primary' : null}
-            onClick={e => handleControlRoomToggle('enabled')}
-          >
-            <MapRoomSymbol
-              $fillColor={room?.fillColor}
-              $borderColor={room?.borderColor}
-              $borderRadius={room?.borderRadius}
-              $borderWidth={room?.borderWidth}
-            />
-          </MapControlButtonExit>
-          <MapControlButtonExit
-            intent={exitEast ? 'primary' : null} icon='arrow-right'
-            onClick={e => handleControlRoomToggle('eastEnabled')}
-          />
-          <MapControlButtonExit
-            intent={exitSouthwest ? 'primary' : null} icon='arrow-bottom-left'
-            onClick={e => handleControlRoomToggle('southwestEnabled')}
-          />
-          <MapControlButtonExit
-            intent={exitSouth ? 'primary' : null} icon='arrow-down'
-            onClick={e => handleControlRoomToggle('southEnabled')}
-          />
-          <MapControlButtonExit
-            intent={exitSoutheast ? 'primary' : null} icon='arrow-bottom-right'
-            onClick={e => handleControlRoomToggle('southeastEnabled')}
-          />
-        </MapButtonGroupExits>
-      </Section>
-      <Section>
-        <FormGroup>
-          <MapControlLabel>
-            Border Width
-            <MapControlSlider
-              min={1}
-              max={10}
-              stepSize={1}
-              labelStepSize={1}
-              onChange={e => handleControlRoomValue('borderWidth', e)}
-              value={borderWidth}
-              disabled={!enabled}
-            />
-          </MapControlLabel>
-          <MapControlLabel>
-            Border Radius
-            <MapControlSlider
-              min={0}
-              max={50}
-              stepSize={1}
-              labelStepSize={10}
-              onChange={e => handleControlRoomValue('borderRadius', e)}
-              value={borderRadius}
-              disabled={!enabled}
-            />
-          </MapControlLabel>
-          <MapControlLabel>
-            Border Color
-            <Popover
-              content={borderColorPopover()}
-              placement='top'
-            >
-              <Button
-                text={borderColor}
-                fill={true}
-                disabled={!enabled}
-              />
-            </Popover>
-          </MapControlLabel>
-          <MapControlLabel>
-            Fill Color
-            <Popover
-              content={fillColorPopover()}
-              placement='top'
-            >
-              <Button
-                text={fillColor}
-                fill={true}
-                disabled={!enabled}
-              />
-            </Popover>
-          </MapControlLabel>
-        </FormGroup>
-      </Section>
+    <MapControlWrapper $theme={theme} $open={sidebarOpen}>
+      <MenuBar
+        onSave={onSave}
+        onPrint={onExport}
+        showGrid={showGrid}
+        onToggleGrid={onToggleGrid}
+        showChunks={showChunks}
+        onToggleChunks={onToggleChunks}
+        darkMode={darkMode}
+        onToggleDarkMode={onToggleDarkMode}
+        is3DView={is3DView}
+        onToggle3DView={onToggle3DView}
+        splitView={splitView}
+        onToggleSplitView={onToggleSplitView}
+        cellSize={cellSize}
+        onCellSizeChange={onCellSizeChange}
+        theme={theme}
+        onCut={onCut}
+        onCopy={onCopy}
+        onPaste={onPaste}
+        onClear={onClear}
+        onUndo={onUndo}
+        onRedo={onRedo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+      />
+
+      <CollapsibleSection
+        title="Map"
+        defaultOpen={true}
+        storageKey="sidebar.map"
+        theme={theme}
+      >
+        <MapSectionContent
+          mapName={mapName}
+          onMapNameCommit={onMapNameCommit}
+          mapCreated={mapCreated}
+          mapEdited={mapEdited}
+          roomCountActive={roomCountActive}
+          roomCountTotal={roomCountTotal}
+          linkCountActive={linkCountActive}
+          linkCountTotal={linkCountTotal}
+          mapKbSize={mapKbSize}
+          mapWidth={mapWidth}
+          mapHeight={mapHeight}
+          maxMapSize={maxMapSize}
+          onExtendMap={onExtendMap}
+          theme={theme}
+        />
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Selected Room(s)"
+        defaultOpen={false}
+        storageKey="sidebar.room"
+        theme={theme}
+      >
+        <RoomSectionContent
+          room={room}
+          focusX={focusX}
+          focusY={focusY}
+          cellSize={cellSize}
+          handleControlRoomValue={handleControlRoomValue}
+          handleControlRoomToggle={handleControlRoomToggle}
+          onExitToggle={onExitToggle}
+          onExitColorChange={onExitColorChange}
+          selectedCells={selectedCells}
+          onNudge={onNudge}
+          elasticNudge={elasticNudge}
+          onToggleElasticNudge={onToggleElasticNudge}
+          onTransform={onTransform}
+          onLayerMove={onLayerMove}
+          textInputRef={textInputRef}
+          isQuillMode={isQuillMode}
+          onNavigate={onNavigate}
+          theme={theme}
+        />
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Generate"
+        defaultOpen={false}
+        storageKey="sidebar.generate"
+        theme={theme}
+      >
+        <GenerateSectionContent
+          selectedCells={selectedCells}
+          focusX={focusX}
+          focusY={focusY}
+          onGenerate={onGenerate}
+          theme={theme}
+        />
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Layers"
+        defaultOpen={false}
+        storageKey="sidebar.layers"
+        theme={theme}
+      >
+        <LayerSectionContent
+          layers={layers}
+          focusLayer={focusLayer}
+          defaultLayer={defaultLayer}
+          onLayerChange={onLayerChange}
+          onLayerAdd={onLayerAdd}
+          onLayerDelete={onLayerDelete}
+          onLayerRename={onLayerRename}
+          onLayerReorder={onLayerReorder}
+          onDefaultLayerChange={onDefaultLayerChange}
+          tilingMode={tilingMode}
+          onTilingModeChange={onTilingModeChange}
+          theme={theme}
+        />
+      </CollapsibleSection>
     </MapControlWrapper>
   );
 }

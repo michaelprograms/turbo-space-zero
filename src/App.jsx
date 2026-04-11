@@ -1,17 +1,20 @@
-import { Routes, Route } from 'react-router-dom';
+import { useAppContext } from './context';
 
-import Home from './routes/home';
-import Map from './routes/map';
+import MapView from './components/map-view';
 
 import './App.css';
 
 function App () {
+  const { isReady } = useAppContext();
+
+  if (!isReady) {
+    return <div className="App">Loading...</div>;
+  }
+
   return (
-    <Routes>
-      <Route path="/turbo-space-zebra/" element={<Home />} />
-      <Route path="/turbo-space-zebra/maps" element={<Home />} />
-      <Route path="/turbo-space-zebra/map/:id" element={<Map />} />
-    </Routes>
+    <div className="App">
+      <MapView />
+    </div>
   );
 }
 

@@ -1,70 +1,64 @@
-# GitHub Codespaces ♥️ React
+# Turbo Space Zero
 
-Welcome to your shiny new Codespace running React! We've got everything fired up and running for you to explore React.
+A browser-based grid map editor for building room-and-exit maps in the MUD / text-adventure style. Draw rooms on a grid, connect them with directional exits, organise them across layers, and view the result in 2D or 3D. Everything runs in the browser; maps persist locally in IndexedDB, with no backend.
 
-You've got a blank canvas to work on from a git perspective as well. There's a single initial commit with the what you're seeing right now - where you go from here is up to you!
+## Tech stack
 
-Everything you do here is contained within this one codespace. There is no repository on GitHub yet. If and when you’re ready you can click "Publish Branch" and we’ll create your repository and push up your project. If you were just exploring then and have no further need for this code then you can simply delete your codespace and it's gone forever.
+- **React 19** + **Vite 8**
+- **Konva** / **react-konva**: 2D canvas rendering
+- **react-three-fiber** + **drei** + **three**: 3D view
+- **idb-keyval**: IndexedDB persistence
+- **styled-components**: co-located `style.js` per component
+- **Vitest** + **@testing-library/react**: tests
 
-This project was bootstrapped for you with [Vite](https://vitejs.dev/).
+## Getting started
 
-## Available Scripts
+Requires Node `24.14.1` (see `.nvmrc`).
 
-In the project directory, you can run:
+```bash
+nvm use
+npm install
+npm start        # dev server on http://localhost:3000
+```
 
-### `npm start`
+## Scripts
 
-We've already run this for you in the `Codespaces: server` terminal window below. If you need to stop the server for any reason you can just run `npm start` again to bring it back online.
+| Command | Description |
+|---|---|
+| `npm start` | Dev server (port 3000) |
+| `npm run build` | Production build to `dist/` |
+| `npm run preview` | Preview the production build |
+| `npm test` | Vitest in watch mode |
+| `npm run test:update` | Update test snapshots |
 
-Runs the app in the development mode.\
-Open [http://localhost:3000/](http://localhost:3000/) in the built-in Simple Browser (`Cmd/Ctrl + Shift + P > Simple Browser: Show`) to view your running application.
+## Architecture
 
-The page will reload automatically when you make changes.\
-You may also see any lint errors in the console.
+### Data layer
+- `src/data/index.js`: storage API over `idb-keyval` (custom stores `tsz-maps` / `tsz-settings`) plus map factory and grid-resize helpers.
+- A map is a set of named **layers**, each holding a 2D array of room objects. Rooms carry properties like `enabled`, fill/border colors, and directional exits.
+- Map CRUD: `getMaps`, `getMap`, `addMap`, `setMap`, `updateMap`, `deleteMap`. Settings: `getSetting` / `setSetting`.
 
-### `npm test`
+### State
+- `src/context`: global app state via React Context; tracks the active map and boots by loading the last-viewed map (or creating a default).
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Components (`src/components`)
+- `map-view`: orchestrator that loads the active map, holds map data in local state, and handles keyboard navigation (arrow / numpad), save, and export.
+- `map-2d-canvas`: Konva grid with rooms as `<Rect>` and exits as connecting `<Line>`s.
+- `map-3d-canvas`: three.js / r3f view of the same map.
+- `map-canvas-tiling`: tiling helpers for the canvas.
+- `map-controls`: sidebar for toggling rooms / exits and editing border & fill.
+- `menu-bar`, `file-menu`, `dialogs`: New / Open / Save / Export PNG and related UI.
 
-### `npm run build`
+### Key patterns
+- Data flows: IndexedDB → `map-view` local state → props down to canvas and controls.
+- Keyboard navigation uses numpad directions (1–9) and arrow keys; Space toggles a room.
+- PNG export via `stageRef.current.toDataURL()`.
+- Deployed under base path `/turbo-space-zero/` (see `vite.config.js`).
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Testing
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npm test
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-## Learn More
-
-You can learn more in the [Vite documentation](https://vitejs.dev/guide/).
-
-To learn Vitest, a Vite-native testing framework, go to [Vitest documentation](https://vitest.dev/guide/)
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://sambitsahoo.com/blog/vite-code-splitting-that-works.html](https://sambitsahoo.com/blog/vite-code-splitting-that-works.html)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://github.com/btd/rollup-plugin-visualizer#rollup-plugin-visualizer](https://github.com/btd/rollup-plugin-visualizer#rollup-plugin-visualizer)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://dev.to/hamdankhan364/simplifying-progressive-web-app-pwa-development-with-vite-a-beginners-guide-38cf](https://dev.to/hamdankhan364/simplifying-progressive-web-app-pwa-development-with-vite-a-beginners-guide-38cf)
-
-### Advanced Configuration
-
-This section has moved here: [https://vitejs.dev/guide/build.html#advanced-base-options](https://vitejs.dev/guide/build.html#advanced-base-options)
-
-### Deployment
-
-This section has moved here: [https://vitejs.dev/guide/build.html](https://vitejs.dev/guide/build.html)
-
-### Troubleshooting
-
-This section has moved here: [https://vitejs.dev/guide/troubleshooting.html](https://vitejs.dev/guide/troubleshooting.html)
+Vitest runs in a `jsdom` environment (`src/setupTests.js`). Tests are co-located with components (`*.test.jsx`).
