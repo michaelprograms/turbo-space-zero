@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"editor.wordWrap": "on",
+		"editor.rulers": [80, 100],
+		"editor.tabSize": 2,
+		"files.eol": "\n",
+		"files.trimTrailingWhitespace": true
+	}
+}
