@@ -245,6 +245,17 @@ export function countExitLinks(layerData) {
   return count;
 }
 
+// Counts cells with a background color (e.g. island-border markers).
+export function countCellBackgrounds(layerData) {
+  let count = 0;
+  for (const col of layerData) {
+    for (const cell of col) {
+      if (cell?.bg) count++;
+    }
+  }
+  return count;
+}
+
 export function estimateMapKbSize(mapLayers) {
   // Measure what actually gets stored (sparse/pruned), not the dense in-memory grid.
   const sparse = (mapLayers ?? []).map(serializeLayer);

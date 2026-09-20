@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest';
-import { getRectCells, getConnectorPositions, EXIT_DIRECTIONS, countEnabledRooms, countExitLinks, estimateMapKbSize, fileTimestamp, moveSelectionAcrossLayers, transformSelection, elasticRemapExits } from './utils';
+import { getRectCells, getConnectorPositions, EXIT_DIRECTIONS, countEnabledRooms, countExitLinks, countCellBackgrounds, estimateMapKbSize, fileTimestamp, moveSelectionAcrossLayers, transformSelection, elasticRemapExits } from './utils';
 
 test('fileTimestamp: zero-pads to YYYY-MM-DD_HHMMSS', () => {
   // 2026-06-14 09:05:03 local
@@ -102,6 +102,20 @@ test('countExitLinks: counts each truthy exit flag, ignores false ones', () => {
 
 test('countExitLinks: returns 0 when no exits set', () => {
   expect(countExitLinks([[{}, { enabled: true }]])).toBe(0);
+});
+
+// countCellBackgrounds
+
+test('countCellBackgrounds: counts cells with a bg color, ignores the rest', () => {
+  const data = [
+    [{ bg: '#00AF00' }, {}],
+    [{ bg: '#00AF00', enabled: true }, { enabled: true }],
+  ];
+  expect(countCellBackgrounds(data)).toBe(2);
+});
+
+test('countCellBackgrounds: returns 0 when no backgrounds set', () => {
+  expect(countCellBackgrounds([[{}, { enabled: true }]])).toBe(0);
 });
 
 // moveSelectionAcrossLayers

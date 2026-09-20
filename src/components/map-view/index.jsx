@@ -13,7 +13,7 @@ import { useMapLayers, enableRoom } from './hooks/useMapLayers';
 import { useMapNavigation } from './hooks/useMapNavigation';
 import { useMapIO } from './hooks/useMapIO';
 import { useMapKeyboard } from './hooks/useMapKeyboard';
-import { DIRECTIONS, KEY_DIRECTION, getRectCells, cloneMapGrid, getEffectiveKeys, moveSelectionAcrossLayers, transformSelection, elasticRemapExits, countEnabledRooms, countExitLinks, estimateMapKbSize } from './utils';
+import { DIRECTIONS, KEY_DIRECTION, getRectCells, cloneMapGrid, getEffectiveKeys, moveSelectionAcrossLayers, transformSelection, elasticRemapExits, countEnabledRooms, countExitLinks, countCellBackgrounds, estimateMapKbSize } from './utils';
 
 import { MapWrapper, QuillBadge, CanvasArea, HamburgerButton, DrawerBackdrop, SplitContainer, SplitPane } from './style.js';
 import QuillDock from './QuillDock';
@@ -89,6 +89,16 @@ function MapView() {
 
   const linkCountTotal = useMemo(
     () => mapLayers.reduce((sum, layer) => sum + countExitLinks(layer.data ?? []), 0),
+    [mapLayers]
+  );
+
+  const bgCountActive = useMemo(
+    () => countCellBackgrounds(mapData),
+    [mapData]
+  );
+
+  const bgCountTotal = useMemo(
+    () => mapLayers.reduce((sum, layer) => sum + countCellBackgrounds(layer.data ?? []), 0),
     [mapLayers]
   );
 
@@ -498,6 +508,8 @@ function MapView() {
             roomCountTotal={roomCountTotal}
             linkCountActive={linkCountActive}
             linkCountTotal={linkCountTotal}
+            bgCountActive={bgCountActive}
+            bgCountTotal={bgCountTotal}
             mapKbSize={mapKbSize}
             onSave={saveMapData}
             onExport={exportAllLayers}
@@ -571,6 +583,7 @@ function MapView() {
                   <Map3DCanvas
                     mapLayers={mapLayers}
                     cellSize={cellSize} mapWidth={mapWidth} mapHeight={mapHeight} theme={theme}
+                    showGrid={showGrid} showChunks={showChunks}
                   />
                 </Suspense>
               );

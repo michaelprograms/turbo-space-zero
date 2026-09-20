@@ -37,6 +37,8 @@ function MapControls(props) {
     roomCountTotal = 0,
     linkCountActive = 0,
     linkCountTotal = 0,
+    bgCountActive = 0,
+    bgCountTotal = 0,
     mapKbSize = '0.0',
     onSave,
     onExport,
@@ -124,6 +126,8 @@ function MapControls(props) {
           roomCountTotal={roomCountTotal}
           linkCountActive={linkCountActive}
           linkCountTotal={linkCountTotal}
+          bgCountActive={bgCountActive}
+          bgCountTotal={bgCountTotal}
           mapKbSize={mapKbSize}
           mapWidth={mapWidth}
           mapHeight={mapHeight}

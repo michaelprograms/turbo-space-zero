@@ -222,7 +222,7 @@ function Map2DCanvas(props) {
             x={roomOffset} y={roomOffset}
             width={konvaRectSize} height={konvaRectSize}
             fill={fillColor} stroke={borderColor}
-            strokeWidth={borderWidth} cornerRadius={borderRadius}
+            strokeWidth={borderWidth} cornerRadius={konvaRectSize * borderRadius / 100}
           />
         ) : null}
 
@@ -312,7 +312,7 @@ function Map2DCanvas(props) {
                 x={roomOffset} y={roomOffset}
                 width={konvaRectSize} height={konvaRectSize}
                 fill={tint} stroke={tint}
-                strokeWidth={borderWidth} cornerRadius={room?.borderRadius ?? ROOM_DEFAULTS.borderRadius}
+                strokeWidth={borderWidth} cornerRadius={konvaRectSize * (room?.borderRadius ?? ROOM_DEFAULTS.borderRadius) / 100}
                 listening={false}
               />
             )}

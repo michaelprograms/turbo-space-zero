@@ -11,8 +11,8 @@ const HEIGHT = ROWS * CELL_SIZE;
 
 const ROOM_SIZE = ROOM_DEFAULTS.roomSize;       // 25
 const BORDER_WIDTH = ROOM_DEFAULTS.borderWidth; // 4
-const BORDER_RADIUS = ROOM_DEFAULTS.borderRadius; // 50 → full circle in Konva
 const KONVA_RECT_SIZE = ROOM_SIZE - BORDER_WIDTH; // 21
+const BORDER_RADIUS = KONVA_RECT_SIZE * ROOM_DEFAULTS.borderRadius / 100; // 50% → full circle
 const ROOM_OFFSET = (CELL_SIZE - KONVA_RECT_SIZE) / 2; // 7.5
 const EXIT_REACH = ROOM_SIZE / 2 + CELL_SIZE * 0.175;  // 18.8
 

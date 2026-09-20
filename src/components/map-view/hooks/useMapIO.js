@@ -104,7 +104,7 @@ export function useMapIO({ activeMapId, result, mapName, theme, mapState, onSave
                   fill: room.fillColor ?? ROOM_DEFAULTS.fillColor,
                   stroke: room.borderColor ?? ROOM_DEFAULTS.borderColor,
                   strokeWidth: borderWidth,
-                  cornerRadius: room.borderRadius ?? ROOM_DEFAULTS.borderRadius,
+                  cornerRadius: nodeSize * (room.borderRadius ?? ROOM_DEFAULTS.borderRadius) / 100,
                 }));
 
                 if (room.exits?.up) {

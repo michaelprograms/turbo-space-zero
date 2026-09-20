@@ -40,6 +40,8 @@ function MapSectionContent({
   mapEdited,
   roomCountActive = 0,
   roomCountTotal = 0,
+  bgCountActive = 0,
+  bgCountTotal = 0,
   linkCountActive = 0,
   linkCountTotal = 0,
   mapKbSize = '0.0',
@@ -111,6 +113,8 @@ function MapSectionContent({
         <MapMetaValue $theme={theme}>{roomCountActive} active · {roomCountTotal} total</MapMetaValue>
         <MapMetaLabel $theme={theme}>Links</MapMetaLabel>
         <MapMetaValue $theme={theme}>{linkCountActive} active · {linkCountTotal} total</MapMetaValue>
+        <MapMetaLabel $theme={theme}>Backgrounds</MapMetaLabel>
+        <MapMetaValue $theme={theme}>{bgCountActive} active · {bgCountTotal} total</MapMetaValue>
         <MapMetaLabel $theme={theme}>Size</MapMetaLabel>
         <MapMetaValue $theme={theme}>{mapWidth} × {mapHeight} · ~{mapKbSize} kb</MapMetaValue>
       </MapMetaTable>
