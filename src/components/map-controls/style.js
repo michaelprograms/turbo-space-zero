@@ -83,8 +83,10 @@ export const ColorPillWrapper = styled.div`
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: ${props => props.$color};
-  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: ${props => props.$empty ? 'transparent' : props.$color};
+  border: 1px ${props => props.$empty
+    ? `dashed ${props.$theme?.borderColorLight || '#ccc'}`
+    : 'solid rgba(0, 0, 0, 0.18)'};
   opacity: ${props => props.$disabled ? 0.45 : 1};
   border-radius: ${props => props.$size === 'mini' ? '5px' : '13px'};
   width: ${props => props.$size === 'mini' ? '18px' : 'auto'};

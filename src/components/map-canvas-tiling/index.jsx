@@ -23,6 +23,7 @@ function MapCanvasTiling({
   cellSize = 40,
   showGrid = true,
   showChunks = false,
+  showLabels = true,
   theme = {},
   selectedCells,
 }) {
@@ -39,6 +40,7 @@ function MapCanvasTiling({
         cellSize={cellSize}
         showGrid={showGrid}
         showChunks={showChunks}
+        showLabels={showLabels}
         theme={theme}
         selectedCells={selectedCells}
       />
@@ -70,6 +72,7 @@ function MapCanvasTiling({
             cellSize={cellSize}
             showGrid={showGrid}
             showChunks={showChunks}
+            showLabels={showLabels}
             theme={theme}
             selectedCells={i === focusLayer ? selectedCells : new Set()}
           />

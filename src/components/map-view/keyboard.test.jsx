@@ -206,16 +206,31 @@ test('pressing s when an input is focused does not save', async () => {
   expect(controls.dataset.canUndo).toBe('true');
 });
 
-test('pressing p triggers map export (Konva.Stage is instantiated)', async () => {
+test.each([
+  ['Ctrl+P', '{Control>}p{/Control}'],
+  ['Cmd+P', '{Meta>}p{/Meta}'],
+  ['Shift+P', '{Shift>}P{/Shift}'],
+])('pressing %s triggers map export (Konva.Stage is instantiated)', async (_, keys) => {
+  const user = userEvent.setup();
+  render(<MapView />);
+  await screen.findByTestId('map-canvas');
+
+  await user.keyboard(keys);
+
+  await vi.waitFor(() => {
+    expect(mockKonvaStage.add).toHaveBeenCalled();
+  });
+});
+
+test('pressing bare p does not trigger export', async () => {
   const user = userEvent.setup();
   render(<MapView />);
   await screen.findByTestId('map-canvas');
 
   await user.keyboard('p');
+  await new Promise(r => setTimeout(r, 50));
 
-  await vi.waitFor(() => {
-    expect(mockKonvaStage.add).toHaveBeenCalled();
-  });
+  expect(mockKonvaStage.add).not.toHaveBeenCalled();
 });
 
 test('pressing p when an input is focused does not trigger export', async () => {
@@ -224,7 +239,7 @@ test('pressing p when an input is focused does not trigger export', async () => 
   await screen.findByTestId('map-canvas');
 
   await user.click(screen.getByTestId('map-name-input'));
-  await user.keyboard('p');
+  await user.keyboard('{Shift>}P{/Shift}');
 
   expect(mockKonvaStage.add).not.toHaveBeenCalled();
 });

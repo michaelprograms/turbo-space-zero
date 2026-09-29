@@ -95,7 +95,7 @@ test('clicking File tab shows File menu items', async () => {
   expect(screen.getByText('Print')).toBeInTheDocument();
 });
 
-test('File menu shows correct shortcut hints: S for Save, P for Print, none for New/Open', async () => {
+test('File menu shows correct shortcut hints: S for Save, ⇧P for Print, none for New/Open', async () => {
   const user = userEvent.setup();
   render(<MenuBar {...defaultProps} />);
   await user.click(screen.getByRole('button', { name: 'File' }));
@@ -106,7 +106,7 @@ test('File menu shows correct shortcut hints: S for Save, P for Print, none for 
   expect(screen.queryByText('⌘P')).not.toBeInTheDocument();
 
   expect(screen.getByText('S')).toBeInTheDocument();
-  expect(screen.getByText('P')).toBeInTheDocument();
+  expect(screen.getByText('⇧P')).toBeInTheDocument();
 });
 
 test('clicking Edit tab shows all Edit menu items', async () => {
@@ -160,6 +160,16 @@ test('clicking Print calls onPrint and closes the dropdown', async () => {
   expect(screen.queryByText('Print')).not.toBeInTheDocument();
 });
 
+test('clicking Print Collapsed calls onPrintCollapsed and closes the dropdown', async () => {
+  const user = userEvent.setup();
+  const onPrintCollapsed = vi.fn();
+  render(<MenuBar {...defaultProps} onPrintCollapsed={onPrintCollapsed} />);
+  await user.click(screen.getByRole('button', { name: 'File' }));
+  await user.click(screen.getByText('Print Collapsed'));
+  expect(onPrintCollapsed).toHaveBeenCalledTimes(1);
+  expect(screen.queryByText('Print Collapsed')).not.toBeInTheDocument();
+});
+
 test('clicking Toggle Grid switch calls onToggleGrid', async () => {
   const user = userEvent.setup();
   const onToggleGrid = vi.fn();
@@ -167,6 +177,15 @@ test('clicking Toggle Grid switch calls onToggleGrid', async () => {
   await user.click(screen.getByRole('button', { name: 'View' }));
   await user.click(screen.getByRole('switch', { name: 'Toggle Grid' }));
   expect(onToggleGrid).toHaveBeenCalledTimes(1);
+});
+
+test('clicking Room Labels switch calls onToggleLabels', async () => {
+  const user = userEvent.setup();
+  const onToggleLabels = vi.fn();
+  render(<MenuBar {...defaultProps} onToggleLabels={onToggleLabels} />);
+  await user.click(screen.getByRole('button', { name: 'View' }));
+  await user.click(screen.getByRole('switch', { name: 'Room Labels' }));
+  expect(onToggleLabels).toHaveBeenCalledTimes(1);
 });
 
 test('clicking Dark Mode switch calls onToggleDarkMode', async () => {

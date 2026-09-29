@@ -36,6 +36,7 @@ function ColorPill({
   showHex = false,
   size = 'full',
   disabled = false,
+  empty = false, // unset value: render as NONE; `value` only seeds the picker
   'aria-label': ariaLabel,
   'data-testid': testId,
 }) {
@@ -85,12 +86,14 @@ function ColorPill({
       ref={ref}
       $size={size}
       $color={value}
+      $empty={empty}
+      $theme={theme}
       $disabled={disabled}
       onClick={(e) => e.stopPropagation()}
     >
       {showHex && (
-        <ColorPillHex style={{ color: readableTextColor(value) }}>
-          {value.toUpperCase()}
+        <ColorPillHex style={{ color: empty ? (theme?.textColor || '#222') : readableTextColor(value) }}>
+          {empty ? 'NONE' : value.toUpperCase()}
         </ColorPillHex>
       )}
       <ColorPillButton
@@ -99,7 +102,7 @@ function ColorPill({
         aria-disabled={disabled}
         aria-label={ariaLabel}
         data-testid={testId}
-        data-color={value}
+        data-color={empty ? undefined : value}
         $disabled={disabled}
         onClick={(e) => {
           e.stopPropagation();

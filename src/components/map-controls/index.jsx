@@ -21,6 +21,8 @@ function MapControls(props) {
     onToggleGrid,
     showChunks = false,
     onToggleChunks,
+    showLabels = true,
+    onToggleLabels,
     darkMode = true,
     onToggleDarkMode,
     is3DView = false,
@@ -42,6 +44,7 @@ function MapControls(props) {
     mapKbSize = '0.0',
     onSave,
     onExport,
+    onExportCollapsed,
     isQuillMode = false,
     onNavigate,
     sidebarOpen = false,
@@ -88,10 +91,13 @@ function MapControls(props) {
       <MenuBar
         onSave={onSave}
         onPrint={onExport}
+        onPrintCollapsed={onExportCollapsed}
         showGrid={showGrid}
         onToggleGrid={onToggleGrid}
         showChunks={showChunks}
         onToggleChunks={onToggleChunks}
+        showLabels={showLabels}
+        onToggleLabels={onToggleLabels}
         darkMode={darkMode}
         onToggleDarkMode={onToggleDarkMode}
         is3DView={is3DView}

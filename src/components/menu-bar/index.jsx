@@ -19,7 +19,7 @@ const TABS = ['tsz', 'file', 'edit', 'view'];
 const TAB_LABELS = { tsz: 'TSZ', file: 'File', edit: 'Edit', view: 'View' };
 const logoUrl = (darkMode) => `${import.meta.env.BASE_URL}${darkMode ? 'logo.svg' : 'logo-light.svg'}`;
 
-function MenuBar({ onSave, onPrint, showGrid, onToggleGrid, showChunks, onToggleChunks, darkMode, onToggleDarkMode, is3DView, onToggle3DView, splitView, onToggleSplitView, cellSize, onCellSizeChange, theme, onCut, onCopy, onPaste, onClear, onUndo, onRedo, canUndo = false, canRedo = false }) {
+function MenuBar({ onSave, onPrint, onPrintCollapsed, showGrid, onToggleGrid, showChunks, onToggleChunks, showLabels = true, onToggleLabels, darkMode, onToggleDarkMode, is3DView, onToggle3DView, splitView, onToggleSplitView, cellSize, onCellSizeChange, theme, onCut, onCopy, onPaste, onClear, onUndo, onRedo, canUndo = false, canRedo = false }) {
   const { activeMapId, navigateToMap } = useAppContext();
   const [openMenu, setOpenMenu] = useState(null);
   const [openDialog, setOpenDialog] = useState(null);
@@ -47,6 +47,7 @@ function MenuBar({ onSave, onPrint, showGrid, onToggleGrid, showChunks, onToggle
 
   const handleSave = () => { close(); onSave?.(); };
   const handlePrint = () => { close(); onPrint?.(); };
+  const handlePrintCollapsed = () => { close(); onPrintCollapsed?.(); };
 
   const handleExportJson = async () => {
     close();
@@ -142,7 +143,11 @@ function MenuBar({ onSave, onPrint, showGrid, onToggleGrid, showChunks, onToggle
             </MenuItem>
             <MenuItem $theme={theme} onClick={handlePrint}>
               <MenuItemLabel $theme={theme}>Print</MenuItemLabel>
-              <MenuItemShortcut $theme={theme}>P</MenuItemShortcut>
+              <MenuItemShortcut $theme={theme}>⇧P</MenuItemShortcut>
+            </MenuItem>
+            <MenuItem $theme={theme} onClick={handlePrintCollapsed}>
+              <MenuItemLabel $theme={theme}>Print Collapsed</MenuItemLabel>
+              <MenuItemShortcut $theme={theme} />
             </MenuItem>
           </DropdownPanel>
         )}
@@ -185,6 +190,10 @@ function MenuBar({ onSave, onPrint, showGrid, onToggleGrid, showChunks, onToggle
             <ToggleRow $theme={theme}>
               <ToggleLabel $theme={theme}>Chunk Guides</ToggleLabel>
               <ToggleSwitch $on={showChunks} $theme={theme} onClick={onToggleChunks} role="switch" aria-checked={showChunks} aria-label="Chunk Guides" />
+            </ToggleRow>
+            <ToggleRow $theme={theme}>
+              <ToggleLabel $theme={theme}>Room Labels</ToggleLabel>
+              <ToggleSwitch $on={showLabels} $theme={theme} onClick={onToggleLabels} role="switch" aria-checked={showLabels} aria-label="Room Labels" />
             </ToggleRow>
             <ToggleRow $theme={theme}>
               <ToggleLabel $theme={theme}>Dark Mode</ToggleLabel>

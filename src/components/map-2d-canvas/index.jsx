@@ -49,6 +49,7 @@ function Map2DCanvas(props) {
     cellSize = 40,
     showGrid = true,
     showChunks = false,
+    showLabels = true,
     theme = {},
     selectedCells = new Set(),
     layerIndex,
@@ -242,7 +243,7 @@ function Map2DCanvas(props) {
           />
         ) : null}
 
-        {room?.text ? (
+        {showLabels && room?.text ? (
           <Text
             x={0} y={0} width={cellSize} height={cellSize}
             text={room.text} align="center" verticalAlign="middle"

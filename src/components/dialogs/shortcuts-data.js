@@ -48,7 +48,7 @@ export const SHORTCUT_GROUPS = [
     label: 'File',
     shortcuts: [
       { action: 'Save', mac: 'S', win: 'S' },
-      { action: 'Print / Export PNG', mac: 'P', win: 'P' },
+      { action: 'Print / Export PNG', mac: '⌘ P or ⇧ P', win: 'Ctrl P or ⇧ P' },
     ],
   },
 ];

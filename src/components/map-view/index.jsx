@@ -36,6 +36,7 @@ function MapView() {
   const [mapName, setMapName] = useState('');
   const [showGrid, setShowGrid] = useState(true);
   const [showChunks, setShowChunks] = useState(false);
+  const [showLabels, setShowLabels] = useState(true);
   const [elasticNudge, setElasticNudge] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [cellSize, setCellSize] = useState(40);
@@ -109,10 +110,10 @@ function MapView() {
 
   const io = useMapIO({
     activeMapId, result, mapName, theme,
-    mapState: { mapFocusX, mapFocusY, focusLayer, defaultLayer, mapWidth, mapHeight, mapLayers, cellSize, darkMode, showGrid, showChunks, elasticNudge },
+    mapState: { mapFocusX, mapFocusY, focusLayer, defaultLayer, mapWidth, mapHeight, mapLayers, cellSize, darkMode, showGrid, showChunks, showLabels, elasticNudge },
     onSaveComplete: resetHistory,
   });
-  const { saveMapData, exportAllLayers } = io;
+  const { saveMapData, exportAllLayers, exportCollapsed } = io;
 
   // Sync settings from DB result when map loads or changes
   useEffect(() => {
@@ -128,8 +129,9 @@ function MapView() {
     if (result?.darkMode !== undefined) setDarkMode(result.darkMode);
     if (result?.showGrid !== undefined) setShowGrid(result.showGrid);
     if (result?.showChunks !== undefined) setShowChunks(result.showChunks);
+    setShowLabels(result?.showLabels ?? true);
     if (result?.elasticNudge !== undefined) setElasticNudge(result.elasticNudge);
-  }, [result?.darkMode, result?.showGrid, result?.showChunks, result?.elasticNudge, activeMapId]);
+  }, [result?.darkMode, result?.showGrid, result?.showChunks, result?.showLabels, result?.elasticNudge, activeMapId]);
 
   useEffect(() => {
     document.title = `${APP_NAME} — ${mapName}`;
@@ -198,6 +200,11 @@ function MapView() {
     const effectiveKeys = getEffectiveKeys(selectedCells, mapFocusX, mapFocusY);
     const mapCopy = cloneMapGrid(mapData);
     if (key === 'text') {
+      // Editing a label while labels are hidden would be invisible, so turn them back on.
+      if (!showLabels) {
+        setShowLabels(true);
+        void updateMap(activeMapId, { showLabels: true });
+      }
       mapCopy[mapFocusX] = [...mapCopy[mapFocusX]];
       mapCopy[mapFocusX][mapFocusY] = { ...mapCopy[mapFocusX][mapFocusY], text: value };
     } else {
@@ -208,7 +215,7 @@ function MapView() {
       }
     }
     updateActiveLayerData(mapCopy);
-  }, [mapData, mapFocusX, mapFocusY, selectedCells, updateActiveLayerData]);
+  }, [mapData, mapFocusX, mapFocusY, selectedCells, updateActiveLayerData, showLabels, activeMapId]);
 
   const handleControlRoomToggle = useCallback((key) => {
     if (key !== 'enabled') return;
@@ -401,6 +408,12 @@ function MapView() {
     await updateMap(activeMapId, { showChunks: newValue });
   }, [showChunks, activeMapId]);
 
+  const handleToggleLabels = useCallback(async () => {
+    const newValue = !showLabels;
+    setShowLabels(newValue);
+    await updateMap(activeMapId, { showLabels: newValue });
+  }, [showLabels, activeMapId]);
+
   const handleMapNameCommit = useCallback(async (name) => {
     setMapName(name);
     await updateMap(activeMapId, { name, edited: Date.now() });
@@ -415,7 +428,10 @@ function MapView() {
     if (event.key === 'Enter') { event.preventDefault(); textInputRef.current?.focus(); return; }
     if (event.key === 'c') { event.preventDefault(); void handleCopy(); return; }
     if (event.key === 's') { event.preventDefault(); void saveMapData(); return; }
-    if (event.key === 'p') { event.preventDefault(); void exportAllLayers(); return; }
+    // Export is slow on big maps (can OOM Firefox), so a stray bare 'p' shouldn't trigger it.
+    if (event.key.toLowerCase() === 'p' && (event.ctrlKey || event.metaKey || event.shiftKey)) {
+      event.preventDefault(); void exportAllLayers(); return;
+    }
 
     if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key === 'z') {
       event.preventDefault(); handleUndo(); return;
@@ -492,6 +508,8 @@ function MapView() {
             onToggleGrid={handleToggleGridVisibility}
             showChunks={showChunks}
             onToggleChunks={handleToggleChunks}
+            showLabels={showLabels}
+            onToggleLabels={handleToggleLabels}
             darkMode={darkMode}
             onToggleDarkMode={handleToggleDarkMode}
             is3DView={is3DView}
@@ -513,6 +531,7 @@ function MapView() {
             mapKbSize={mapKbSize}
             onSave={saveMapData}
             onExport={exportAllLayers}
+            onExportCollapsed={exportCollapsed}
             theme={theme}
             isQuillMode={isQuillMode}
             onNavigate={handleNavigate}
@@ -574,6 +593,7 @@ function MapView() {
                   cellSize={cellSize}
                   showGrid={showGrid}
                   showChunks={showChunks}
+                  showLabels={showLabels}
                   theme={theme}
                   selectedCells={selectedCells}
                 />
@@ -583,7 +603,7 @@ function MapView() {
                   <Map3DCanvas
                     mapLayers={mapLayers}
                     cellSize={cellSize} mapWidth={mapWidth} mapHeight={mapHeight} theme={theme}
-                    showGrid={showGrid} showChunks={showChunks}
+                    showGrid={showGrid} showChunks={showChunks} showLabels={showLabels}
                   />
                 </Suspense>
               );

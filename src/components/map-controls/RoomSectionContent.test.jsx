@@ -89,6 +89,19 @@ test('changing room label calls handleControlRoomValue with text field and new v
   expect(handleControlRoomValue).toHaveBeenCalledWith('text', expect.stringContaining('A'));
 });
 
+test.each(['Enter', 'Escape'])('%s blurs the room label input without reaching document listeners', async (key) => {
+  const user = userEvent.setup();
+  const docListener = vi.fn();
+  document.addEventListener('keydown', docListener);
+  render(<RoomSectionContent {...defaultProps} />);
+  const input = screen.getByDisplayValue('Test Room');
+  await user.click(input);
+  await user.keyboard(`{${key}}`);
+  document.removeEventListener('keydown', docListener);
+  expect(input).not.toHaveFocus();
+  expect(docListener).not.toHaveBeenCalled();
+});
+
 test('renders fill color picker with correct value', () => {
   const { container } = render(<RoomSectionContent {...defaultProps} />);
   const fillPill = [...container.querySelectorAll('[data-color]')].find(i => i.dataset.color === '#aabbcc');
@@ -205,4 +218,28 @@ test('exit swatches are not rendered in quill mode', () => {
   expect(screen.queryByTestId('north-exit-color')).not.toBeInTheDocument();
   expect(screen.queryByTestId('up-exit-color')).not.toBeInTheDocument();
   expect(screen.queryByTestId('down-exit-color')).not.toBeInTheDocument();
+});
+
+test('cell background pill shows NONE when the room has no bg', () => {
+  render(<RoomSectionContent {...defaultProps} />);
+  expect(screen.getByText('NONE')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Cell background color' })).not.toHaveAttribute('data-color');
+  expect(screen.queryByRole('button', { name: 'Clear cell background' })).not.toBeInTheDocument();
+});
+
+test('cell background pill shows the hex when the room has a bg', () => {
+  const room = { ...defaultRoom, bg: '#3a7d44' };
+  render(<RoomSectionContent {...defaultProps} room={room} />);
+  expect(screen.queryByText('NONE')).not.toBeInTheDocument();
+  expect(screen.getByText('#3A7D44')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Cell background color' })).toHaveAttribute('data-color', '#3a7d44');
+});
+
+test('picking a color on an unset cell background calls handleControlRoomValue with bg', async () => {
+  const user = userEvent.setup();
+  const handleControlRoomValue = vi.fn();
+  render(<RoomSectionContent {...defaultProps} handleControlRoomValue={handleControlRoomValue} />);
+  await user.click(screen.getByRole('button', { name: 'Cell background color' }));
+  await user.click(screen.getByRole('button', { name: '#ff0000' }));
+  expect(handleControlRoomValue).toHaveBeenCalledWith('bg', '#ff0000');
 });

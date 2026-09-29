@@ -12,8 +12,84 @@ import {
 import { ROOM_DEFAULTS, EXIT_ARROW_COLORS } from '../../../constants/room';
 import { EXIT_DIRECTIONS, getConnectorPositions, fileTimestamp } from '../utils';
 
+// Draws one layer's exits, rooms, up/down arrows and labels onto a Konva layer.
+function drawLayerRooms(konvaLayer, data, { mapWidth, mapHeight, cellSize, labelColor }) {
+  for (let x = 0; x < mapWidth; x++) {
+    for (let y = 0; y < mapHeight; y++) {
+      const room = data[x]?.[y];
+      if (!room) continue;
+
+      const xPos = x * cellSize;
+      const yPos = y * cellSize;
+      const cx = xPos + cellSize / 2;
+      const cy = yPos + cellSize / 2;
+      const roomSize = room.roomSize ?? ROOM_DEFAULTS.roomSize;
+      const borderWidth = room.borderWidth ?? ROOM_DEFAULTS.borderWidth;
+
+      for (const { key, dx, dy } of EXIT_DIRECTIONS) {
+        if (!room.exits?.[key]) continue;
+        const reach = getExitLineReach(roomSize, cellSize);
+        konvaLayer.add(new Konva.Line({
+          points: [cx, cy, cx + dx * reach, cy + dy * reach],
+          stroke: resolveExitColor(room, key),
+          strokeWidth: 4, lineCap: 'round',
+        }));
+      }
+
+      if (room.enabled) {
+        const nodeSize = getRoomRectSize(roomSize, borderWidth);
+        const nodeOffset = getRoomOffset(cellSize, roomSize, borderWidth);
+        konvaLayer.add(new Konva.Rect({
+          x: xPos + nodeOffset, y: yPos + nodeOffset,
+          width: nodeSize, height: nodeSize,
+          fill: room.fillColor ?? ROOM_DEFAULTS.fillColor,
+          stroke: room.borderColor ?? ROOM_DEFAULTS.borderColor,
+          strokeWidth: borderWidth,
+          cornerRadius: nodeSize * (room.borderRadius ?? ROOM_DEFAULTS.borderRadius) / 100,
+        }));
+
+        if (room.exits?.up) {
+          konvaLayer.add(new Konva.Line({
+            x: xPos, y: yPos,
+            points: getUpArrowPoints(roomSize, cellSize, cellSize / 2),
+            closed: true, fill: EXIT_ARROW_COLORS.up, stroke: EXIT_ARROW_COLORS.up, strokeWidth: 0,
+          }));
+        }
+        if (room.exits?.down) {
+          konvaLayer.add(new Konva.Line({
+            x: xPos, y: yPos,
+            points: getDownArrowPoints(roomSize, cellSize, cellSize / 2),
+            closed: true, fill: EXIT_ARROW_COLORS.down, stroke: EXIT_ARROW_COLORS.down, strokeWidth: 0,
+          }));
+        }
+        if (room.text) {
+          konvaLayer.add(new Konva.Text({
+            x: xPos, y: yPos, width: cellSize, height: cellSize,
+            text: room.text, align: 'center', verticalAlign: 'middle',
+            fontSize: Math.max(8, Math.floor(cellSize * 0.25)),
+            fill: labelColor,
+          }));
+        }
+      }
+    }
+  }
+}
+
+function openImageWindow(url, mapName) {
+  const newWindow = window.open();
+  if (!newWindow) return;
+  const doc = newWindow.document;
+  const stamped = `${mapName || 'Map'} — ${fileTimestamp()}`;
+  doc.title = stamped;
+  const img = doc.createElement('img');
+  img.src = url;
+  img.alt = stamped;
+  img.style.maxWidth = '100%';
+  doc.body.appendChild(img);
+}
+
 export function useMapIO({ activeMapId, result, mapName, theme, mapState, onSaveComplete }) {
-  const { mapFocusX, mapFocusY, focusLayer, defaultLayer, mapWidth, mapHeight, mapLayers, cellSize, darkMode, showGrid, showChunks } = mapState;
+  const { mapFocusX, mapFocusY, focusLayer, defaultLayer, mapWidth, mapHeight, mapLayers, cellSize, darkMode, showGrid, showChunks, showLabels } = mapState;
   const abortRef = useRef(false);
 
   useEffect(() => {
@@ -38,6 +114,7 @@ export function useMapIO({ activeMapId, result, mapName, theme, mapState, onSave
         darkMode,
         showGrid,
         showChunks,
+        showLabels,
         edited: Date.now(),
       };
       await setMap(activeMapId, newData);
@@ -46,7 +123,7 @@ export function useMapIO({ activeMapId, result, mapName, theme, mapState, onSave
       console.error(`Failed to save map: ${error}`);
     }
   }, [result, mapName, mapFocusX, mapFocusY, focusLayer, defaultLayer, mapWidth, mapHeight,
-      mapLayers, cellSize, darkMode, showGrid, showChunks, activeMapId, onSaveComplete]);
+      mapLayers, cellSize, darkMode, showGrid, showChunks, showLabels, activeMapId, onSaveComplete]);
 
   const exportAllLayers = useCallback(async () => {
     if (!mapLayers.length) return;
@@ -58,6 +135,7 @@ export function useMapIO({ activeMapId, result, mapName, theme, mapState, onSave
       const headerH = 28;
       const connectorH = 28;
       const layerCount = mapLayers.length;
+      const drawOpts = { mapWidth, mapHeight, cellSize, labelColor: theme?.labelText || '#222222' };
       const totalH = layerCount * (headerH + stageH) + (layerCount - 1) * connectorH;
 
       const layerImages = await Promise.all(mapLayers.map(async ({ data }) => {
@@ -73,65 +151,7 @@ export function useMapIO({ activeMapId, result, mapName, theme, mapState, onSave
             fill: theme?.canvasBackground || '#ffffff',
           }));
 
-          for (let x = 0; x < mapWidth; x++) {
-            for (let y = 0; y < mapHeight; y++) {
-              const room = data[x]?.[y];
-              if (!room) continue;
-
-              const xPos = x * cellSize;
-              const yPos = y * cellSize;
-              const cx = xPos + cellSize / 2;
-              const cy = yPos + cellSize / 2;
-              const roomSize = room.roomSize ?? ROOM_DEFAULTS.roomSize;
-              const borderWidth = room.borderWidth ?? ROOM_DEFAULTS.borderWidth;
-
-              for (const { key, dx, dy } of EXIT_DIRECTIONS) {
-                if (!room.exits?.[key]) continue;
-                const reach = getExitLineReach(roomSize, cellSize);
-                konvaLayer.add(new Konva.Line({
-                  points: [cx, cy, cx + dx * reach, cy + dy * reach],
-                  stroke: resolveExitColor(room, key),
-                  strokeWidth: 4, lineCap: 'round',
-                }));
-              }
-
-              if (room.enabled) {
-                const nodeSize = getRoomRectSize(roomSize, borderWidth);
-                const nodeOffset = getRoomOffset(cellSize, roomSize, borderWidth);
-                konvaLayer.add(new Konva.Rect({
-                  x: xPos + nodeOffset, y: yPos + nodeOffset,
-                  width: nodeSize, height: nodeSize,
-                  fill: room.fillColor ?? ROOM_DEFAULTS.fillColor,
-                  stroke: room.borderColor ?? ROOM_DEFAULTS.borderColor,
-                  strokeWidth: borderWidth,
-                  cornerRadius: nodeSize * (room.borderRadius ?? ROOM_DEFAULTS.borderRadius) / 100,
-                }));
-
-                if (room.exits?.up) {
-                  konvaLayer.add(new Konva.Line({
-                    x: xPos, y: yPos,
-                    points: getUpArrowPoints(roomSize, cellSize, cellSize / 2),
-                    closed: true, fill: EXIT_ARROW_COLORS.up, stroke: EXIT_ARROW_COLORS.up, strokeWidth: 0,
-                  }));
-                }
-                if (room.exits?.down) {
-                  konvaLayer.add(new Konva.Line({
-                    x: xPos, y: yPos,
-                    points: getDownArrowPoints(roomSize, cellSize, cellSize / 2),
-                    closed: true, fill: EXIT_ARROW_COLORS.down, stroke: EXIT_ARROW_COLORS.down, strokeWidth: 0,
-                  }));
-                }
-                if (room.text) {
-                  konvaLayer.add(new Konva.Text({
-                    x: xPos, y: yPos, width: cellSize, height: cellSize,
-                    text: room.text, align: 'center', verticalAlign: 'middle',
-                    fontSize: Math.max(8, Math.floor(cellSize * 0.25)),
-                    fill: theme?.labelText || '#222222',
-                  }));
-                }
-              }
-            }
-          }
+          drawLayerRooms(konvaLayer, data, drawOpts);
           return stage.toDataURL({ pixelRatio });
         } finally {
           stage.destroy();
@@ -184,21 +204,42 @@ export function useMapIO({ activeMapId, result, mapName, theme, mapState, onSave
 
       if (abortRef.current) return;
 
-      const finalUrl = canvas.toDataURL('image/png');
-      const newWindow = window.open();
-      if (!newWindow) return;
-      const doc = newWindow.document;
-      const stamped = `${mapName || 'Map'} — ${fileTimestamp()}`;
-      doc.title = stamped;
-      const img = doc.createElement('img');
-      img.src = finalUrl;
-      img.alt = stamped;
-      img.style.maxWidth = '100%';
-      doc.body.appendChild(img);
+      openImageWindow(canvas.toDataURL('image/png'), mapName);
     } catch (error) {
       console.error(`Failed to export map: ${error}`);
     }
   }, [mapLayers, mapWidth, mapHeight, cellSize, theme, mapName]);
 
-  return { saveMapData, exportAllLayers };
+  // Top-down view: every layer drawn bottom (index 0) to top on one stage, so
+  // upper rooms cover lower ones while lower exits still peek out around them.
+  const exportCollapsed = useCallback(async () => {
+    if (!mapLayers.length) return;
+
+    const container = document.createElement('div');
+    container.style.display = 'none';
+    document.body.appendChild(container);
+    const stageW = mapWidth * cellSize;
+    const stageH = mapHeight * cellSize;
+    const stage = new Konva.Stage({ container, width: stageW, height: stageH });
+    try {
+      const konvaLayer = new Konva.Layer();
+      stage.add(konvaLayer);
+      konvaLayer.add(new Konva.Rect({
+        x: 0, y: 0, width: stageW, height: stageH,
+        fill: theme?.canvasBackground || '#ffffff',
+      }));
+      const drawOpts = { mapWidth, mapHeight, cellSize, labelColor: theme?.labelText || '#222222' };
+      for (const { data } of mapLayers) drawLayerRooms(konvaLayer, data, drawOpts);
+      const url = stage.toDataURL({ pixelRatio: 2 });
+      if (abortRef.current) return;
+      openImageWindow(url, mapName);
+    } catch (error) {
+      console.error(`Failed to export collapsed map: ${error}`);
+    } finally {
+      stage.destroy();
+      document.body.removeChild(container);
+    }
+  }, [mapLayers, mapWidth, mapHeight, cellSize, theme, mapName]);
+
+  return { saveMapData, exportAllLayers, exportCollapsed };
 }

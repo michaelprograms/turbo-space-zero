@@ -175,7 +175,12 @@ function RoomSectionContent({
         value={roomText}
         placeholder="Room label"
         onChange={(e) => handleControlRoomValue('text', e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Escape') e.target.blur(); }}
+        onKeyDown={(e) => {
+          if (e.key !== 'Escape' && e.key !== 'Enter') return;
+          // Stop the document-level map handler, where Enter re-focuses this input.
+          e.stopPropagation();
+          e.target.blur();
+        }}
       />
 
       <MapControlFormGroup>
@@ -256,6 +261,7 @@ function RoomSectionContent({
               theme={theme}
               aria-label="Cell background color"
               value={room.bg ?? CELL_BG_DEFAULT}
+              empty={!room.bg}
               onChange={(c) => handleControlRoomValue('bg', c)}
             />
           </span>

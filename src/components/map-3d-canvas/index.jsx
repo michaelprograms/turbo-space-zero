@@ -496,7 +496,7 @@ function LayerGroup({ layerData, layerIndex, cellSize, mapWidth, mapHeight, labe
 
 // --- MapScene ---
 
-function MapScene({ mapLayers, cellSize, mapWidth, mapHeight, labelColor, showGrid, showChunks, theme }) {
+function MapScene({ mapLayers, cellSize, mapWidth, mapHeight, labelColor, showGrid, showChunks, showLabels, theme }) {
   const roomBuckets = useMemo(() => {
     const all = collectRoomInstances(mapLayers, cellSize);
     return {
@@ -527,7 +527,7 @@ function MapScene({ mapLayers, cellSize, mapWidth, mapHeight, labelColor, showGr
         showChunks={showChunks}
         theme={theme}
       />
-      {mapLayers.map((layer, layerIndex) => (
+      {showLabels && mapLayers.map((layer, layerIndex) => (
         <LayerGroup
           key={layer.id ?? layerIndex}
           layerData={layer.data ?? []}
@@ -619,7 +619,7 @@ function ShotRecorder({ recording, mode, mapCenter, cellSize, onArmed, onComplet
 
 // --- Main export ---
 
-export default function Map3DCanvas({ mapLayers, cellSize, mapWidth, mapHeight, theme, showGrid = true, showChunks = false }) {
+export default function Map3DCanvas({ mapLayers, cellSize, mapWidth, mapHeight, theme, showGrid = true, showChunks = false, showLabels = true }) {
   const { position, target } = useMemo(
     () => computeCameraSetup(mapWidth, mapHeight, cellSize, mapLayers?.length ?? 1),
     [mapWidth, mapHeight, cellSize, mapLayers?.length]
@@ -705,6 +705,7 @@ export default function Map3DCanvas({ mapLayers, cellSize, mapWidth, mapHeight, 
           labelColor={labelColor}
           showGrid={showGrid}
           showChunks={showChunks}
+          showLabels={showLabels}
           theme={theme}
         />
       </Canvas>
