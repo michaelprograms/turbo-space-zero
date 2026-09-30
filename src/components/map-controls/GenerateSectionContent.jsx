@@ -15,17 +15,46 @@ import {
 
 const randomSeed = () => Math.floor(Math.random() * 1e9);
 
+function Slider({ theme, label, value, onChange, min, max, step = 1, left, right }) {
+  return (
+    <MapControlLabel $theme={theme}>
+      {label}
+      <MapControlSlider
+        type="range" min={min} max={max} step={step} value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        style={{ accentColor: theme?.accentColor || '#106ba3' }}
+      />
+      <SliderLabelRow $theme={theme}><span>{left}</span><span>{right}</span></SliderLabelRow>
+    </MapControlLabel>
+  );
+}
+
+const pct = (v) => `${Math.round(v * 100)}%`;
+
 // Overwrites the current selection (or the focused cell if nothing is
-// marquee-selected) with either a meandering Path or a connected Maze.
+// marquee-selected) with a winding Path, a lattice Maze, or a Voronoi Web.
 function GenerateSectionContent({ selectedCells, focusX, focusY, onGenerate, theme }) {
   const [pattern, setPattern] = useState('path');
-  const [density, setDensity] = useState(0.7);
   const [curviness, setCurviness] = useState(0.5);
+  const [branches, setBranches] = useState(2);
+  const [mazeSpacing, setMazeSpacing] = useState(2);
+  const [branching, setBranching] = useState(0.5);
+  const [loops, setLoops] = useState(0.1);
+  const [diagonals, setDiagonals] = useState(false);
+  const [webSpacing, setWebSpacing] = useState(6);
   const [seed, setSeed] = useState(randomSeed);
 
   const areaSize = getEffectiveKeys(selectedCells, focusX, focusY).length;
 
-  const handleGenerate = () => onGenerate?.({ pattern, density, curviness, seed });
+  const handleGenerate = () => onGenerate?.({
+    pattern,
+    seed,
+    ...{
+      path: { curviness, branches },
+      maze: { spacing: mazeSpacing, branching, loops, diagonals },
+      web: { spacing: webSpacing },
+    }[pattern],
+  });
 
   return (
     <>
@@ -35,37 +64,43 @@ function GenerateSectionContent({ selectedCells, focusX, focusY, onGenerate, the
 
       <ResizeHeader $theme={theme}>
         <LayoutToggleLabel $theme={theme}>Pattern</LayoutToggleLabel>
-        <LayoutToggleButton
-          $theme={theme} $active={pattern === 'path'} type="button"
-          onClick={() => setPattern('path')}
-        >PATH</LayoutToggleButton>
-        <LayoutToggleButton
-          $theme={theme} $active={pattern === 'maze'} type="button"
-          onClick={() => setPattern('maze')}
-        >MAZE</LayoutToggleButton>
+        {['path', 'maze', 'web'].map(p => (
+          <LayoutToggleButton
+            key={p} $theme={theme} $active={pattern === p} type="button"
+            onClick={() => setPattern(p)}
+          >{p.toUpperCase()}</LayoutToggleButton>
+        ))}
       </ResizeHeader>
 
-      {pattern === 'maze' && (
-        <MapControlLabel $theme={theme}>
-          Density — {Math.round(density * 100)}%
-          <MapControlSlider
-            type="range" min={0.1} max={1} step={0.05} value={density}
-            onChange={e => setDensity(Number(e.target.value))}
-            style={{ accentColor: theme?.accentColor || '#106ba3' }}
-          />
-          <SliderLabelRow $theme={theme}><span>Sparse</span><span>Dense</span></SliderLabelRow>
-        </MapControlLabel>
+      {pattern === 'path' && (
+        <>
+          <Slider theme={theme} label={`Curviness — ${pct(curviness)}`} value={curviness} onChange={setCurviness}
+            min={0} max={1} step={0.05} left="Straight" right="Winding" />
+          <Slider theme={theme} label={`Branches — ${branches}`} value={branches} onChange={setBranches}
+            min={0} max={10} left="None" right="Many" />
+        </>
       )}
 
-      <MapControlLabel $theme={theme}>
-        Curviness — {Math.round(curviness * 100)}%
-        <MapControlSlider
-          type="range" min={0} max={1} step={0.05} value={curviness}
-          onChange={e => setCurviness(Number(e.target.value))}
-          style={{ accentColor: theme?.accentColor || '#106ba3' }}
-        />
-        <SliderLabelRow $theme={theme}><span>Straight</span><span>Winding</span></SliderLabelRow>
-      </MapControlLabel>
+      {pattern === 'maze' && (
+        <>
+          <Slider theme={theme} label={`Spacing — ${mazeSpacing}`} value={mazeSpacing} onChange={setMazeSpacing}
+            min={1} max={8} left="Packed" right="Open" />
+          <Slider theme={theme} label={`Branching — ${pct(branching)}`} value={branching} onChange={setBranching}
+            min={0} max={1} step={0.05} left="Corridors" right="Bushy" />
+          <Slider theme={theme} label={`Loops — ${pct(loops)}`} value={loops} onChange={setLoops}
+            min={0} max={1} step={0.05} left="Dead ends" right="Many loops" />
+          <ResizeHeader $theme={theme}>
+            <LayoutToggleLabel $theme={theme}>Diagonals</LayoutToggleLabel>
+            <LayoutToggleButton $theme={theme} $active={!diagonals} type="button" onClick={() => setDiagonals(false)}>OFF</LayoutToggleButton>
+            <LayoutToggleButton $theme={theme} $active={diagonals} type="button" onClick={() => setDiagonals(true)}>ON</LayoutToggleButton>
+          </ResizeHeader>
+        </>
+      )}
+
+      {pattern === 'web' && (
+        <Slider theme={theme} label={`Spacing — ${webSpacing}`} value={webSpacing} onChange={setWebSpacing}
+          min={3} max={20} left="Tight" right="Open" />
+      )}
 
       <MapControlLabel $theme={theme}>
         Seed

@@ -6,7 +6,7 @@ import MapControls from '../map-controls';
 import { getMap, updateMap, MAX_MAP_SIZE } from '../../data';
 import { getTheme } from '../../theme';
 import { EXIT_DEFAULT_COLOR, ROOM_DEFAULTS } from '../../constants/room';
-import { generateLayout, generatePath } from './generate';
+import { generateLayout, generatePath, generateWeb } from './generate';
 import { APP_NAME } from '../../constants/app';
 
 import { useMapLayers, enableRoom } from './hooks/useMapLayers';
@@ -231,9 +231,8 @@ function MapView() {
   // Overwrite the current selection with a freshly generated connected layout.
   const handleGenerate = useCallback((opts) => {
     const effectiveKeys = getEffectiveKeys(selectedCells, mapFocusX, mapFocusY);
-    const layout = opts.pattern === 'path'
-      ? generatePath(effectiveKeys, opts)
-      : generateLayout(effectiveKeys, opts);
+    const generator = { path: generatePath, maze: generateLayout, web: generateWeb }[opts.pattern];
+    const layout = generator(effectiveKeys, opts);
     const mapCopy = cloneMapGrid(mapData);
     for (const cellKey of effectiveKeys) {
       const [x, y] = cellKey.split(',').map(Number);
