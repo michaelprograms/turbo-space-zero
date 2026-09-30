@@ -88,3 +88,32 @@ test('exportCollapsed draws every layer bottom-to-top onto one stage', async () 
   expect(open).toHaveBeenCalledTimes(1);
   open.mockRestore();
 });
+
+test('exportCollapsed paints every layer\'s cell backgrounds under all rooms', async () => {
+  const open = vi.spyOn(window, 'open').mockReturnValue({ document });
+  const { result } = renderHook(() =>
+    useMapIO({
+      activeMapId: 'test-id',
+      result: makeResult(),
+      mapName: 'My Map',
+      theme: { canvasBackground: '#bg' },
+      mapState: makeMapState({
+        mapWidth: 2, mapHeight: 1,
+        mapLayers: [
+          // bottom layer: a room at (0,0) on water, plain land at (1,0)
+          { name: 'Bottom', data: [[{ enabled: true, fillColor: '#bottom', bg: '#water' }], [{ bg: '#land' }]] },
+          { name: 'Top', data: [[{ bg: '#topWater' }], [{ enabled: true, fillColor: '#top' }]] },
+        ],
+      }),
+    })
+  );
+
+  await act(async () => { await result.current.exportCollapsed(); });
+
+  // Canvas, then all backgrounds bottom→top (upper layer's tint wins), then rooms.
+  expect(konvaNodes.filter(n => n.type === 'Rect').map(n => n.fill))
+    .toEqual(['#bg', '#water', '#land', '#topWater', '#bottom', '#top']);
+  const land = konvaNodes.find(n => n.fill === '#land');
+  expect(land).toMatchObject({ x: 40, y: 0, width: 40, height: 40 });
+  open.mockRestore();
+});

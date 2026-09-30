@@ -12,6 +12,18 @@ import {
 import { ROOM_DEFAULTS, EXIT_ARROW_COLORS } from '../../../constants/room';
 import { EXIT_DIRECTIONS, getConnectorPositions, fileTimestamp } from '../utils';
 
+// Draws one layer's full-cell background tints (land/water etc.), matching the
+// 2D canvas. Call before drawLayerRooms so rooms sit on top.
+function drawLayerBackgrounds(konvaLayer, data, { mapWidth, mapHeight, cellSize }) {
+  for (let x = 0; x < mapWidth; x++) {
+    for (let y = 0; y < mapHeight; y++) {
+      const bg = data[x]?.[y]?.bg;
+      if (!bg) continue;
+      konvaLayer.add(new Konva.Rect({ x: x * cellSize, y: y * cellSize, width: cellSize, height: cellSize, fill: bg }));
+    }
+  }
+}
+
 // Draws one layer's exits, rooms, up/down arrows and labels onto a Konva layer.
 function drawLayerRooms(konvaLayer, data, { mapWidth, mapHeight, cellSize, labelColor }) {
   for (let x = 0; x < mapWidth; x++) {
@@ -151,6 +163,7 @@ export function useMapIO({ activeMapId, result, mapName, theme, mapState, onSave
             fill: theme?.canvasBackground || '#ffffff',
           }));
 
+          drawLayerBackgrounds(konvaLayer, data, drawOpts);
           drawLayerRooms(konvaLayer, data, drawOpts);
           return stage.toDataURL({ pixelRatio });
         } finally {
@@ -229,6 +242,8 @@ export function useMapIO({ activeMapId, result, mapName, theme, mapState, onSave
         fill: theme?.canvasBackground || '#ffffff',
       }));
       const drawOpts = { mapWidth, mapHeight, cellSize, labelColor: theme?.labelText || '#222222' };
+      // All tints first (upper layers' win), so no background hides a lower room.
+      for (const { data } of mapLayers) drawLayerBackgrounds(konvaLayer, data, drawOpts);
       for (const { data } of mapLayers) drawLayerRooms(konvaLayer, data, drawOpts);
       const url = stage.toDataURL({ pixelRatio: 2 });
       if (abortRef.current) return;
