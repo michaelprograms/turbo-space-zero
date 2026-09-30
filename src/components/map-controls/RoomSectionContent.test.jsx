@@ -243,3 +243,17 @@ test('picking a color on an unset cell background calls handleControlRoomValue w
   await user.click(screen.getByRole('button', { name: '#ff0000' }));
   expect(handleControlRoomValue).toHaveBeenCalledWith('bg', '#ff0000');
 });
+
+// The pill lives inside a <label>; a click on non-interactive content in a label
+// also activates the label's first button (Clear), wiping the pick.
+test('clicking the pill or the gradient does not clear the cell background', async () => {
+  const user = userEvent.setup();
+  const handleControlRoomValue = vi.fn();
+  const room = { ...defaultRoom, bg: '#3a7d44' };
+  const { container } = render(
+    <RoomSectionContent {...defaultProps} room={room} handleControlRoomValue={handleControlRoomValue} />
+  );
+  await user.click(screen.getByRole('button', { name: 'Cell background color' }));
+  await user.click(container.querySelector('.react-colorful__saturation'));
+  expect(handleControlRoomValue).not.toHaveBeenCalledWith('bg', undefined);
+});

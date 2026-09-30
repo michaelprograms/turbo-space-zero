@@ -90,6 +90,9 @@ function ColorPill({
       $theme={theme}
       $disabled={disabled}
       onClick={(e) => e.stopPropagation()}
+      // Pills sit inside <label>s; a click on the gradient/pill would otherwise
+      // also "click" the label's first button (e.g. Cell Background's Clear).
+      onClickCapture={(e) => e.preventDefault()}
     >
       {showHex && (
         <ColorPillHex style={{ color: empty ? (theme?.textColor || '#222') : readableTextColor(value) }}>
