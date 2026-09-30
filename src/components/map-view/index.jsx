@@ -217,6 +217,19 @@ function MapView() {
     updateActiveLayerData(mapCopy);
   }, [mapData, mapFocusX, mapFocusY, selectedCells, updateActiveLayerData, showLabels, activeMapId]);
 
+  // Labels are typed one room at a time, but cleared across the whole selection.
+  const handleClearLabels = useCallback(() => {
+    const mapCopy = cloneMapGrid(mapData);
+    for (const cellKey of getEffectiveKeys(selectedCells, mapFocusX, mapFocusY)) {
+      const [x, y] = cellKey.split(',').map(Number);
+      if (!mapCopy[x]?.[y]?.text) continue;
+      mapCopy[x] = [...mapCopy[x]];
+      const { text: _text, ...rest } = mapCopy[x][y];
+      mapCopy[x][y] = rest;
+    }
+    updateActiveLayerData(mapCopy);
+  }, [mapData, mapFocusX, mapFocusY, selectedCells, updateActiveLayerData]);
+
   const handleControlRoomToggle = useCallback((key) => {
     if (key !== 'enabled') return;
     let mapCopy = cloneMapGrid(mapData);
@@ -502,6 +515,7 @@ function MapView() {
             focusX={mapFocusX}
             focusY={mapFocusY}
             handleControlRoomValue={handleControlRoomValue}
+            onClearLabels={handleClearLabels}
             handleControlRoomToggle={handleControlRoomToggle}
             showGrid={showGrid}
             onToggleGrid={handleToggleGridVisibility}

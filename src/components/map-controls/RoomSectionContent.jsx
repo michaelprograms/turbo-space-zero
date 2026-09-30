@@ -30,6 +30,8 @@ function RoomSectionContent({
   cellSize = 40,
   handleControlRoomValue,
   handleControlRoomToggle,
+  onClearLabels,
+  selectedLabelCount = 0,
   onExitToggle,
   onExitColorChange,
   selectedCells = EMPTY_SET,
@@ -182,6 +184,16 @@ function RoomSectionContent({
           e.target.blur();
         }}
       />
+      {selectedLabelCount > 0 && (
+        <ClearBgButton
+          $theme={theme}
+          type="button"
+          style={{ display: 'block', margin: '4px 5% 0 auto', padding: 0 }}
+          onClick={onClearLabels}
+        >
+          {selectedLabelCount === 1 ? 'Clear label' : `Clear ${selectedLabelCount} labels`}
+        </ClearBgButton>
+      )}
 
       <MapControlFormGroup>
         <MapControlLabel $theme={theme}>

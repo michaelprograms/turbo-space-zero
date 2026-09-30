@@ -89,7 +89,7 @@ vi.mock('../map-2d-canvas', () => ({
 }));
 
 vi.mock('../map-controls', () => ({
-  default: ({ mapName, onMapNameChange, onMapNameBlur, isQuillMode, sidebarOpen, textInputRef, selectedCells, onNudge, handleControlRoomValue, onExtendMap, mapWidth, mapHeight, onExitToggle, onLayerDelete, onSave, canUndo, canRedo, onUndo, onRedo, onExitColorChange, showLabels, onToggleLabels }) => (
+  default: ({ mapName, onMapNameChange, onMapNameBlur, isQuillMode, sidebarOpen, textInputRef, selectedCells, onNudge, handleControlRoomValue, onExtendMap, mapWidth, mapHeight, onExitToggle, onLayerDelete, onSave, canUndo, canRedo, onUndo, onRedo, onExitColorChange, showLabels, onToggleLabels, onClearLabels }) => (
     <div
       data-sidebar-open={String(sidebarOpen)}
       data-show-labels={String(showLabels)}
@@ -109,6 +109,7 @@ vi.mock('../map-controls', () => ({
       <button data-testid="nudge-north" onClick={() => onNudge?.('north')} />
       <button data-testid="toggle-labels" onClick={onToggleLabels} />
       <button data-testid="set-room-text" onClick={() => handleControlRoomValue?.('text', 'Hall')} />
+      <button data-testid="clear-labels" onClick={onClearLabels} />
       <button data-testid="set-fill-color" onClick={() => handleControlRoomValue?.('fillColor', '#ff0000')} />
       <button data-testid="extend-add-north" onClick={() => onExtendMap?.('north', 'add')} />
       <button data-testid="extend-remove-south" onClick={() => onExtendMap?.('south', 'remove')} />

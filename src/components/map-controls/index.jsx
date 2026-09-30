@@ -8,7 +8,7 @@ import GenerateSectionContent from './GenerateSectionContent';
 import {
   MapControlWrapper,
 } from './style.js';
-import { EMPTY_SET } from '../map-view/utils';
+import { EMPTY_SET, getEffectiveKeys } from '../map-view/utils';
 
 function MapControls(props) {
   const {
@@ -16,6 +16,7 @@ function MapControls(props) {
     focusX = 0,
     focusY = 0,
     handleControlRoomValue,
+    onClearLabels,
     handleControlRoomToggle,
     showGrid = true,
     onToggleGrid,
@@ -156,6 +157,11 @@ function MapControls(props) {
           cellSize={cellSize}
           handleControlRoomValue={handleControlRoomValue}
           handleControlRoomToggle={handleControlRoomToggle}
+          onClearLabels={onClearLabels}
+          selectedLabelCount={getEffectiveKeys(selectedCells, focusX, focusY).filter((k) => {
+            const [x, y] = k.split(',').map(Number);
+            return mapData[x]?.[y]?.text;
+          }).length}
           onExitToggle={onExitToggle}
           onExitColorChange={onExitColorChange}
           selectedCells={selectedCells}

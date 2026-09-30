@@ -257,3 +257,17 @@ test('clicking the pill or the gradient does not clear the cell background', asy
   await user.click(container.querySelector('.react-colorful__saturation'));
   expect(handleControlRoomValue).not.toHaveBeenCalledWith('bg', undefined);
 });
+
+test('clear-labels button shows the selection label count and calls onClearLabels', async () => {
+  const user = userEvent.setup();
+  const onClearLabels = vi.fn();
+  const { rerender } = render(<RoomSectionContent {...defaultProps} selectedLabelCount={0} onClearLabels={onClearLabels} />);
+  expect(screen.queryByRole('button', { name: /Clear .*label/ })).not.toBeInTheDocument();
+
+  rerender(<RoomSectionContent {...defaultProps} selectedLabelCount={1} onClearLabels={onClearLabels} />);
+  expect(screen.getByRole('button', { name: 'Clear label' })).toBeInTheDocument();
+
+  rerender(<RoomSectionContent {...defaultProps} selectedLabelCount={3} onClearLabels={onClearLabels} />);
+  await user.click(screen.getByRole('button', { name: 'Clear 3 labels' }));
+  expect(onClearLabels).toHaveBeenCalledTimes(1);
+});
