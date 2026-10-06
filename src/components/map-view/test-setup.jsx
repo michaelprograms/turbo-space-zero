@@ -118,6 +118,9 @@ vi.mock('../map-controls', () => ({
       <button data-testid="delete-layer-0" onClick={() => onLayerDelete?.(0)} />
       <button data-testid="save-btn" onClick={onSave} />
       <button data-testid="set-north-exit-color" onClick={() => onExitColorChange?.('north', '#ff0000')} />
+      {/* Live updates from one color-picker drag share a merge key. */}
+      <button data-testid="drag-north-exit-color-1" onClick={() => onExitColorChange?.('north', '#111111', 99)} />
+      <button data-testid="drag-north-exit-color-2" onClick={() => onExitColorChange?.('north', '#222222', 99)} />
       <button data-testid="reset-north-exit-color" onClick={() => onExitColorChange?.('north', '#666666')} />
     </div>
   ),

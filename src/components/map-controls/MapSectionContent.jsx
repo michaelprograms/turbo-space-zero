@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { estimateMapKbSize, countEnabledRooms, countExitLinks, countCellBackgrounds } from '../map-view/utils';
 import { DIRECTION_GRID } from './constants';
 import {
   MapButtonGroupExits,
@@ -27,6 +28,10 @@ const EDGE_DIRECTION_AXES = {
   southwest: { x: true,  y: true  },
 };
 
+// Serializing a big map to measure it takes tens of ms (≈36 ms on 150×150×10),
+// so re-measure only once edits pause.
+const KB_DEBOUNCE_MS = 500;
+
 function formatDate(ts) {
   return new Date(ts).toLocaleDateString('en-US', {
     month: 'short', day: 'numeric', year: 'numeric',
@@ -38,19 +43,34 @@ function MapSectionContent({
   onMapNameCommit,
   mapCreated,
   mapEdited,
-  roomCountActive = 0,
-  roomCountTotal = 0,
-  bgCountActive = 0,
-  bgCountTotal = 0,
-  linkCountActive = 0,
-  linkCountTotal = 0,
-  mapKbSize = '0.0',
+  mapData = [],
+  layers = [],
   mapWidth = 25,
   mapHeight = 25,
   maxMapSize = 100,
   onExtendMap,
   theme,
 }) {
+  // This component only exists while the Map section is expanded, so a collapsed
+  // section never measures. Measured once on open, then after edits settle.
+  const [kb, setKb] = useState(() => ({ layers, size: estimateMapKbSize(layers) }));
+  useEffect(() => {
+    if (kb.layers === layers) return;
+    const t = setTimeout(() => setKb({ layers, size: estimateMapKbSize(layers) }), KB_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [layers, kb.layers]);
+  const mapKbSize = kb.size;
+
+  // Counts also only run while the section is open (≈9 ms per edit on big maps).
+  const counts = useMemo(() => {
+    const total = (count) => layers.reduce((sum, layer) => sum + count(layer.data ?? []), 0);
+    return {
+      rooms: [countEnabledRooms(mapData), total(countEnabledRooms)],
+      links: [countExitLinks(mapData), total(countExitLinks)],
+      bgs: [countCellBackgrounds(mapData), total(countCellBackgrounds)],
+    };
+  }, [mapData, layers]);
+
   const [extendMode, setExtendMode] = useState('add');
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -110,11 +130,11 @@ function MapSectionContent({
         <MapMetaLabel $theme={theme}>Edited</MapMetaLabel>
         <MapMetaValue $theme={theme}>{mapEdited ? formatDate(mapEdited) : '—'}</MapMetaValue>
         <MapMetaLabel $theme={theme}>Rooms</MapMetaLabel>
-        <MapMetaValue $theme={theme}>{roomCountActive} active · {roomCountTotal} total</MapMetaValue>
+        <MapMetaValue $theme={theme}>{counts.rooms[0]} active · {counts.rooms[1]} total</MapMetaValue>
         <MapMetaLabel $theme={theme}>Links</MapMetaLabel>
-        <MapMetaValue $theme={theme}>{linkCountActive} active · {linkCountTotal} total</MapMetaValue>
+        <MapMetaValue $theme={theme}>{counts.links[0]} active · {counts.links[1]} total</MapMetaValue>
         <MapMetaLabel $theme={theme}>Backgrounds</MapMetaLabel>
-        <MapMetaValue $theme={theme}>{bgCountActive} active · {bgCountTotal} total</MapMetaValue>
+        <MapMetaValue $theme={theme}>{counts.bgs[0]} active · {counts.bgs[1]} total</MapMetaValue>
         <MapMetaLabel $theme={theme}>Size</MapMetaLabel>
         <MapMetaValue $theme={theme}>{mapWidth} × {mapHeight} · ~{mapKbSize} kb</MapMetaValue>
       </MapMetaTable>

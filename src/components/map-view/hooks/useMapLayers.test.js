@@ -90,6 +90,40 @@ test('handleRedo re-applies undone change', () => {
   expect(hook.current.canRedo).toBe(false);
 });
 
+test('commits sharing a merge key collapse into one undo step', () => {
+  const result = makeResult(); // stable: a new object per render would re-run the load effect forever
+  const { result: hook } = renderHook(() => useMapLayers({ result, activeMapId: 1 }));
+  const named = (name) => [{ ...makeLayer(), name }];
+  act(() => { hook.current.commitMapLayers(named('A')); });            // plain edit
+  act(() => { hook.current.commitMapLayers(named('B'), undefined, undefined, 7); });
+  act(() => { hook.current.commitMapLayers(named('C'), undefined, undefined, 7); });
+  act(() => { hook.current.commitMapLayers(named('D'), undefined, undefined, 7); });
+  expect(hook.current.mapLayers[0].name).toBe('D');
+  act(() => { hook.current.handleUndo(); });
+  expect(hook.current.mapLayers[0].name).toBe('A'); // whole drag undone at once
+  act(() => { hook.current.handleRedo(); });
+  expect(hook.current.mapLayers[0].name).toBe('D');
+});
+
+test('a different key, a plain commit, or an undo starts a new undo step', () => {
+  const result = makeResult(); // stable: a new object per render would re-run the load effect forever
+  const { result: hook } = renderHook(() => useMapLayers({ result, activeMapId: 1 }));
+  const named = (name) => [{ ...makeLayer(), name }];
+  act(() => { hook.current.commitMapLayers(named('A'), undefined, undefined, 1); });
+  act(() => { hook.current.commitMapLayers(named('B'), undefined, undefined, 2); });
+  act(() => { hook.current.commitMapLayers(named('C')); });
+  act(() => { hook.current.commitMapLayers(named('D'), undefined, undefined, 2); });
+  act(() => { hook.current.handleUndo(); });
+  expect(hook.current.mapLayers[0].name).toBe('C');
+  act(() => { hook.current.commitMapLayers(named('E'), undefined, undefined, 2); }); // after undo: fresh step
+  act(() => { hook.current.handleUndo(); });
+  expect(hook.current.mapLayers[0].name).toBe('C');
+  act(() => { hook.current.handleUndo(); });
+  expect(hook.current.mapLayers[0].name).toBe('B');
+  act(() => { hook.current.handleUndo(); });
+  expect(hook.current.mapLayers[0].name).toBe('A');
+});
+
 test('handleLayerAdd appends a new blank layer and sets focusLayer', () => {
   const result = makeResult();
   const { result: hook } = renderHook(() =>

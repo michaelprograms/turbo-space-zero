@@ -40,6 +40,9 @@ export function useMapLayers({ result, activeMapId }) {
   const [canRedo, setCanRedo] = useState(false);
   const undoStackRef = useRef([]);
   const redoStackRef = useRef([]);
+  // Merge key of the last commit: consecutive commits with the same key (one
+  // color-picker drag) share a single undo step. Any other commit/undo/redo ends the run.
+  const mergeKeyRef = useRef(null);
 
   useEffect(() => {
     if (!result) return;
@@ -64,12 +67,15 @@ export function useMapLayers({ result, activeMapId }) {
     setCanRedo(false);
   }, []);
 
-  const commitMapLayers = useCallback((newLayers, newWidth = mapWidth, newHeight = mapHeight) => {
-    undoStackRef.current = [...undoStackRef.current.slice(-29), {
-      layers: mapLayers,
-      width: mapWidth,
-      height: mapHeight,
-    }];
+  const commitMapLayers = useCallback((newLayers, newWidth = mapWidth, newHeight = mapHeight, mergeKey = null) => {
+    if (mergeKey === null || mergeKey !== mergeKeyRef.current) {
+      undoStackRef.current = [...undoStackRef.current.slice(-29), {
+        layers: mapLayers,
+        width: mapWidth,
+        height: mapHeight,
+      }];
+    }
+    mergeKeyRef.current = mergeKey;
     redoStackRef.current = [];
     setMapLayers(newLayers);
     if (newWidth !== mapWidth) setMapWidth(newWidth);
@@ -78,15 +84,17 @@ export function useMapLayers({ result, activeMapId }) {
     setCanRedo(false);
   }, [mapLayers, mapWidth, mapHeight]);
 
-  const updateActiveLayerData = useCallback((newData) => {
+  const updateActiveLayerData = useCallback((newData, mergeKey) => {
     commitMapLayers(
-      mapLayers.map((layer, i) => i === focusLayer ? { ...layer, data: newData } : layer)
+      mapLayers.map((layer, i) => i === focusLayer ? { ...layer, data: newData } : layer),
+      undefined, undefined, mergeKey,
     );
   }, [focusLayer, mapLayers, commitMapLayers]);
 
   const handleUndo = useCallback(() => {
     const stack = undoStackRef.current;
     if (!stack.length) return;
+    mergeKeyRef.current = null;
     const snapshot = stack[stack.length - 1];
     undoStackRef.current = stack.slice(0, -1);
     redoStackRef.current = [{
@@ -104,6 +112,7 @@ export function useMapLayers({ result, activeMapId }) {
   const handleRedo = useCallback(() => {
     const stack = redoStackRef.current;
     if (!stack.length) return;
+    mergeKeyRef.current = null;
     const snapshot = stack[0];
     redoStackRef.current = stack.slice(1);
     undoStackRef.current = [...undoStackRef.current, {

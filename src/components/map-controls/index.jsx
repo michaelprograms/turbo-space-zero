@@ -36,13 +36,6 @@ function MapControls(props) {
     onMapNameCommit,
     mapCreated,
     mapEdited,
-    roomCountActive = 0,
-    roomCountTotal = 0,
-    linkCountActive = 0,
-    linkCountTotal = 0,
-    bgCountActive = 0,
-    bgCountTotal = 0,
-    mapKbSize = '0.0',
     onSave,
     onExport,
     onExportCollapsed,
@@ -129,13 +122,8 @@ function MapControls(props) {
           onMapNameCommit={onMapNameCommit}
           mapCreated={mapCreated}
           mapEdited={mapEdited}
-          roomCountActive={roomCountActive}
-          roomCountTotal={roomCountTotal}
-          linkCountActive={linkCountActive}
-          linkCountTotal={linkCountTotal}
-          bgCountActive={bgCountActive}
-          bgCountTotal={bgCountTotal}
-          mapKbSize={mapKbSize}
+          mapData={mapData}
+          layers={layers}
           mapWidth={mapWidth}
           mapHeight={mapHeight}
           maxMapSize={maxMapSize}

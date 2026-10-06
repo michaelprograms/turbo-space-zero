@@ -115,7 +115,7 @@ function RoomSectionContent({
                     data-testid={`${btn.dir}-exit-color`}
                     aria-label={`${btn.label} exit color`}
                     value={room.exitColors?.[btn.dir] ?? EXIT_DEFAULT_COLOR}
-                    onChange={(c) => onExitColorChange?.(btn.dir, c)}
+                    onChange={(c, mergeKey) => onExitColorChange?.(btn.dir, c, mergeKey)}
                     onPick={() => { if (!(room.exits?.[btn.dir])) onExitToggle?.(btn.dir); }}
                   />
                 )}
@@ -141,7 +141,7 @@ function RoomSectionContent({
                 data-testid="up-exit-color"
                 aria-label="Up exit color"
                 value={room.exitColors?.up ?? EXIT_DEFAULT_COLOR}
-                onChange={(c) => onExitColorChange?.('up', c)}
+                onChange={(c, mergeKey) => onExitColorChange?.('up', c, mergeKey)}
                 onPick={() => { if (!(room.exits?.up)) onExitToggle?.('up'); }}
               />
             )}
@@ -162,7 +162,7 @@ function RoomSectionContent({
                 data-testid="down-exit-color"
                 aria-label="Down exit color"
                 value={room.exitColors?.down ?? EXIT_DEFAULT_COLOR}
-                onChange={(c) => onExitColorChange?.('down', c)}
+                onChange={(c, mergeKey) => onExitColorChange?.('down', c, mergeKey)}
                 onPick={() => { if (!(room.exits?.down)) onExitToggle?.('down'); }}
               />
             )}
@@ -170,13 +170,18 @@ function RoomSectionContent({
         </div>
       </div>
 
+      {/* Uncontrolled: typing stays local (a map commit re-renders and re-measures
+          the whole map), and the label is committed once on blur — Enter/Escape
+          blur too. The key remounts it with fresh text when the room or its
+          label changes from elsewhere (undo, Clear, paste). */}
       <MapControlTextInput
+        key={`${focusX},${focusY},${roomText}`}
         $theme={theme}
         ref={textInputRef}
         type="text"
-        value={roomText}
+        defaultValue={roomText}
         placeholder="Room label"
-        onChange={(e) => handleControlRoomValue('text', e.target.value)}
+        onBlur={(e) => { if (e.target.value !== roomText) handleControlRoomValue('text', e.target.value); }}
         onKeyDown={(e) => {
           if (e.key !== 'Escape' && e.key !== 'Enter') return;
           // Stop the document-level map handler, where Enter re-focuses this input.
@@ -242,7 +247,7 @@ function RoomSectionContent({
             theme={theme}
             value={borderColor}
             disabled={borderColorDisabled}
-            onChange={(c) => handleControlRoomValue('borderColor', c)}
+            onChange={(c, mergeKey) => handleControlRoomValue('borderColor', c, mergeKey)}
           />
         </MapControlColorLabel>
         <MapControlColorLabel $theme={theme} $disabled={!enabled}>
@@ -252,7 +257,7 @@ function RoomSectionContent({
             theme={theme}
             value={fillColor}
             disabled={!enabled}
-            onChange={(c) => handleControlRoomValue('fillColor', c)}
+            onChange={(c, mergeKey) => handleControlRoomValue('fillColor', c, mergeKey)}
           />
         </MapControlColorLabel>
         <MapControlColorLabel $theme={theme}>
@@ -274,7 +279,7 @@ function RoomSectionContent({
               aria-label="Cell background color"
               value={room.bg ?? CELL_BG_DEFAULT}
               empty={!room.bg}
-              onChange={(c) => handleControlRoomValue('bg', c)}
+              onChange={(c, mergeKey) => handleControlRoomValue('bg', c, mergeKey)}
             />
           </span>
         </MapControlColorLabel>

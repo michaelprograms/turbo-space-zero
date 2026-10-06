@@ -230,3 +230,19 @@ test('handleExitColorChange applies exit color to all selected cells', async () 
   expect(mapData[1][1].exitColors?.north).toBe('#ff0000'); // selected cell
   expect(mapData[2][2].exitColors?.north).toBe('#ff0000'); // focus cell
 });
+
+test('a color-picker drag (shared merge key) undoes in one step', async () => {
+  const user = userEvent.setup();
+  render(<MapView />);
+  const canvas = await screen.findByTestId('map-canvas');
+  await waitFor(() => expect(canvas.dataset.focusX).toBe('2'));
+  const north = () => JSON.parse(canvas.dataset.mapData)[2][2].exitColors?.north;
+
+  await user.click(screen.getByTestId('set-north-exit-color')); // plain edit → #ff0000
+  await user.click(screen.getByTestId('drag-north-exit-color-1')); // drag: #111111 …
+  await user.click(screen.getByTestId('drag-north-exit-color-2')); // … then #222222
+  expect(north()).toBe('#222222');
+
+  await user.keyboard('{Control>}z{/Control}');
+  expect(north()).toBe('#ff0000'); // whole drag gone, earlier edit kept
+});

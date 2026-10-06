@@ -23,7 +23,8 @@ vi.mock('./MapSectionContent', () => ({
     <div
       data-testid="map-section-content"
       data-map-name={props.mapName}
-      data-room-count-active={props.roomCountActive}
+      data-layer-count={props.layers?.length}
+      data-has-map-data={String(Array.isArray(props.mapData))}
     />
   ),
 }));
@@ -62,9 +63,6 @@ const defaultProps = {
   onMapNameCommit: vi.fn(),
   mapCreated: 1748995200000,
   mapEdited: 1749081600000,
-  roomCountActive: 0,
-  roomCountTotal: 0,
-  mapKbSize: '0.0',
   onExport: vi.fn(),
   mapWidth: 25,
   mapHeight: 20,
@@ -159,7 +157,8 @@ test('passes focusLayer to LayerSectionContent', () => {
   expect(screen.getByTestId('layer-section-content')).toHaveAttribute('data-focus-layer', '2');
 });
 
-test('passes roomCountActive to MapSectionContent', () => {
-  render(<MapControls {...defaultProps} roomCountActive={7} />);
-  expect(screen.getByTestId('map-section-content')).toHaveAttribute('data-room-count-active', '7');
+test('passes layers and the active layer data to MapSectionContent', () => {
+  render(<MapControls {...defaultProps} layers={[{ data: [] }, { data: [] }]} mapData={[]} />);
+  expect(screen.getByTestId('map-section-content')).toHaveAttribute('data-layer-count', '2');
+  expect(screen.getByTestId('map-section-content')).toHaveAttribute('data-has-map-data', 'true');
 });

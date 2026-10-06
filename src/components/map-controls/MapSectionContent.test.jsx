@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import MapSectionContent from './MapSectionContent';
+import { estimateMapKbSize } from '../map-view/utils';
 
 const CREATED_TS = 1748995200000;
 const EDITED_TS  = 1749081600000;
@@ -11,9 +12,7 @@ const defaultProps = {
   onMapNameCommit: vi.fn(),
   mapCreated: CREATED_TS,
   mapEdited: EDITED_TS,
-  roomCountActive: 3,
-  roomCountTotal: 10,
-  mapKbSize: '1.4',
+  layers: [],
   mapWidth: 10,
   mapHeight: 10,
   maxMapSize: 100,
@@ -89,14 +88,40 @@ test('renders a formatted created date', () => {
   expect(screen.getByText(formatted)).toBeInTheDocument();
 });
 
-test('renders room count with active and total', () => {
-  render(<MapSectionContent {...defaultProps} roomCountActive={3} roomCountTotal={10} />);
-  expect(screen.getByText(/3 active · 10 total/i)).toBeInTheDocument();
+test('counts rooms, links and backgrounds for the active layer and all layers', () => {
+  const active = [[{ enabled: true, exits: { east: true } }, { bg: '#111111' }], [{ enabled: true, exits: { west: true } }, {}]];
+  const other = [[{ enabled: true, bg: '#222222' }]];
+  render(<MapSectionContent {...defaultProps} mapData={active} layers={[{ data: active }, { data: other }]} />);
+  expect(screen.getByText('2 active · 3 total')).toBeInTheDocument(); // rooms
+  expect(screen.getByText('2 active · 2 total')).toBeInTheDocument(); // exit links
+  expect(screen.getByText('1 active · 2 total')).toBeInTheDocument(); // backgrounds
 });
 
+// A layer whose serialized size is clearly bigger than an empty one.
+const bigLayers = [{ name: 'L', data: Array.from({ length: 30 }, () =>
+  Array.from({ length: 30 }, () => ({ enabled: true, text: 'A long room label', bg: '#123456' }))) }];
+
 test('renders size as width × height with kb estimate', () => {
-  render(<MapSectionContent {...defaultProps} mapWidth={15} mapHeight={20} mapKbSize="2.3" />);
-  expect(screen.getByText(/15 × 20 · ~2\.3 kb/i)).toBeInTheDocument();
+  render(<MapSectionContent {...defaultProps} mapWidth={15} mapHeight={20} layers={bigLayers} />);
+  expect(screen.getByText(`15 × 20 · ~${estimateMapKbSize(bigLayers)} kb`)).toBeInTheDocument();
+});
+
+test('kb estimate waits for edits to pause before re-measuring', () => {
+  vi.useFakeTimers();
+  try {
+    const { rerender } = render(<MapSectionContent {...defaultProps} layers={[]} />);
+    const empty = `~${estimateMapKbSize([])} kb`;
+    expect(screen.getByText(new RegExp(empty))).toBeInTheDocument();
+
+    rerender(<MapSectionContent {...defaultProps} layers={bigLayers} />);
+    act(() => { vi.advanceTimersByTime(400); });
+    expect(screen.getByText(new RegExp(empty))).toBeInTheDocument(); // not yet
+
+    act(() => { vi.advanceTimersByTime(200); });
+    expect(screen.getByText(new RegExp(`~${estimateMapKbSize(bigLayers)} kb`))).toBeInTheDocument();
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 // ── Resize section ────────────────────────────────────────────────────────────

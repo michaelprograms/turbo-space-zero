@@ -13,7 +13,7 @@ import { useMapLayers, enableRoom } from './hooks/useMapLayers';
 import { useMapNavigation } from './hooks/useMapNavigation';
 import { useMapIO } from './hooks/useMapIO';
 import { useMapKeyboard } from './hooks/useMapKeyboard';
-import { DIRECTIONS, KEY_DIRECTION, getRectCells, cloneMapGrid, getEffectiveKeys, moveSelectionAcrossLayers, transformSelection, elasticRemapExits, countEnabledRooms, countExitLinks, countCellBackgrounds, estimateMapKbSize } from './utils';
+import { DIRECTIONS, KEY_DIRECTION, getRectCells, cloneMapGrid, getEffectiveKeys, moveSelectionAcrossLayers, transformSelection, elasticRemapExits } from './utils';
 
 import { MapWrapper, QuillBadge, CanvasArea, HamburgerButton, DrawerBackdrop, SplitContainer, SplitPane } from './style.js';
 import QuillDock from './QuillDock';
@@ -72,41 +72,6 @@ function MapView() {
   } = nav;
 
   const theme = useMemo(() => getTheme(darkMode), [darkMode]);
-
-  const roomCountActive = useMemo(
-    () => countEnabledRooms(mapData),
-    [mapData]
-  );
-
-  const roomCountTotal = useMemo(
-    () => mapLayers.reduce((sum, layer) => sum + countEnabledRooms(layer.data ?? []), 0),
-    [mapLayers]
-  );
-
-  const linkCountActive = useMemo(
-    () => countExitLinks(mapData),
-    [mapData]
-  );
-
-  const linkCountTotal = useMemo(
-    () => mapLayers.reduce((sum, layer) => sum + countExitLinks(layer.data ?? []), 0),
-    [mapLayers]
-  );
-
-  const bgCountActive = useMemo(
-    () => countCellBackgrounds(mapData),
-    [mapData]
-  );
-
-  const bgCountTotal = useMemo(
-    () => mapLayers.reduce((sum, layer) => sum + countCellBackgrounds(layer.data ?? []), 0),
-    [mapLayers]
-  );
-
-  const mapKbSize = useMemo(
-    () => estimateMapKbSize(mapLayers),
-    [mapLayers]
-  );
 
   const io = useMapIO({
     activeMapId, result, mapName, theme,
@@ -177,7 +142,8 @@ function MapView() {
     updateActiveLayerData(mapCopy);
   }, [mapData, mapFocusX, mapFocusY, updateActiveLayerData]);
 
-  const handleExitColorChange = useCallback((dir, color) => {
+  // mergeKey: a color picker's live drag commits share one undo step.
+  const handleExitColorChange = useCallback((dir, color, mergeKey) => {
     const effectiveKeys = getEffectiveKeys(selectedCells, mapFocusX, mapFocusY);
     const mapCopy = cloneMapGrid(mapData);
     for (const cellKey of effectiveKeys) {
@@ -193,10 +159,10 @@ function MapView() {
       room.exitColors = exitColors;
       mapCopy[x][y] = room;
     }
-    updateActiveLayerData(mapCopy);
+    updateActiveLayerData(mapCopy, mergeKey);
   }, [mapData, mapFocusX, mapFocusY, selectedCells, updateActiveLayerData]);
 
-  const handleControlRoomValue = useCallback((key, value) => {
+  const handleControlRoomValue = useCallback((key, value, mergeKey) => {
     const effectiveKeys = getEffectiveKeys(selectedCells, mapFocusX, mapFocusY);
     const mapCopy = cloneMapGrid(mapData);
     if (key === 'text') {
@@ -214,7 +180,7 @@ function MapView() {
         mapCopy[x][y] = { ...mapCopy[x][y], [key]: value };
       }
     }
-    updateActiveLayerData(mapCopy);
+    updateActiveLayerData(mapCopy, mergeKey);
   }, [mapData, mapFocusX, mapFocusY, selectedCells, updateActiveLayerData, showLabels, activeMapId]);
 
   // Labels are typed one room at a time, but cleared across the whole selection.
@@ -535,13 +501,6 @@ function MapView() {
             onMapNameCommit={handleMapNameCommit}
             mapCreated={result.created}
             mapEdited={result.edited}
-            roomCountActive={roomCountActive}
-            roomCountTotal={roomCountTotal}
-            linkCountActive={linkCountActive}
-            linkCountTotal={linkCountTotal}
-            bgCountActive={bgCountActive}
-            bgCountTotal={bgCountTotal}
-            mapKbSize={mapKbSize}
             onSave={saveMapData}
             onExport={exportAllLayers}
             onExportCollapsed={exportCollapsed}

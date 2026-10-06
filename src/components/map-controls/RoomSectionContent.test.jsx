@@ -80,13 +80,41 @@ test('renders room label input with correct value', () => {
   expect(screen.getByDisplayValue('Test Room')).toBeInTheDocument();
 });
 
-test('changing room label calls handleControlRoomValue with text field and new value', async () => {
+test('typing in the room label does not touch the map until blur', async () => {
   const user = userEvent.setup();
   const handleControlRoomValue = vi.fn();
   render(<RoomSectionContent {...defaultProps} handleControlRoomValue={handleControlRoomValue} />);
   const input = screen.getByDisplayValue('Test Room');
-  await user.type(input, 'A');
-  expect(handleControlRoomValue).toHaveBeenCalledWith('text', expect.stringContaining('A'));
+  await user.type(input, 'AB');
+  expect(handleControlRoomValue).not.toHaveBeenCalled();
+  await user.tab();
+  expect(handleControlRoomValue).toHaveBeenCalledTimes(1);
+  expect(handleControlRoomValue).toHaveBeenCalledWith('text', 'Test RoomAB');
+});
+
+test.each(['Enter', 'Escape'])('%s commits the edited room label once', async (key) => {
+  const user = userEvent.setup();
+  const handleControlRoomValue = vi.fn();
+  render(<RoomSectionContent {...defaultProps} handleControlRoomValue={handleControlRoomValue} />);
+  await user.type(screen.getByDisplayValue('Test Room'), 'X');
+  await user.keyboard(`{${key}}`);
+  expect(handleControlRoomValue).toHaveBeenCalledTimes(1);
+  expect(handleControlRoomValue).toHaveBeenCalledWith('text', 'Test RoomX');
+});
+
+test('leaving the room label unchanged commits nothing', async () => {
+  const user = userEvent.setup();
+  const handleControlRoomValue = vi.fn();
+  render(<RoomSectionContent {...defaultProps} handleControlRoomValue={handleControlRoomValue} />);
+  await user.click(screen.getByDisplayValue('Test Room'));
+  await user.keyboard('{Enter}');
+  expect(handleControlRoomValue).not.toHaveBeenCalled();
+});
+
+test('room label input shows the new text when the room changes', () => {
+  const { rerender } = render(<RoomSectionContent {...defaultProps} />);
+  rerender(<RoomSectionContent {...defaultProps} focusX={1} room={{ ...defaultRoom, text: 'Other' }} />);
+  expect(screen.getByDisplayValue('Other')).toBeInTheDocument();
 });
 
 test.each(['Enter', 'Escape'])('%s blurs the room label input without reaching document listeners', async (key) => {
@@ -180,8 +208,9 @@ test('picking a swatch in the popover calls onExitColorChange with dir and color
   const room = { ...defaultRoom, exits: { north: true } };
   render(<RoomSectionContent {...defaultProps} room={room} onExitColorChange={onExitColorChange} />);
   await user.click(screen.getByTestId('north-exit-color'));  // open popover
-  await user.click(screen.getByRole('button', { name: '#ff0000' }));  // preset swatch
-  expect(onExitColorChange).toHaveBeenCalledWith('north', '#ff0000');
+  await user.click(screen.getAllByRole('button', { name: '#ff0000' })[0]);  // preset swatch
+  await user.keyboard('{Escape}'); // committed when the picker closes
+  expect(onExitColorChange).toHaveBeenCalledWith('north', '#ff0000', expect.any(Number)); // + undo-merge key
 });
 
 test('clicking swatch on disabled exit calls onExitToggle with that direction', async () => {
@@ -240,8 +269,9 @@ test('picking a color on an unset cell background calls handleControlRoomValue w
   const handleControlRoomValue = vi.fn();
   render(<RoomSectionContent {...defaultProps} handleControlRoomValue={handleControlRoomValue} />);
   await user.click(screen.getByRole('button', { name: 'Cell background color' }));
-  await user.click(screen.getByRole('button', { name: '#ff0000' }));
-  expect(handleControlRoomValue).toHaveBeenCalledWith('bg', '#ff0000');
+  await user.click(screen.getAllByRole('button', { name: '#ff0000' })[0]); // [0] = preset; recents may repeat it
+  await user.keyboard('{Escape}'); // committed when the picker closes
+  expect(handleControlRoomValue).toHaveBeenCalledWith('bg', '#ff0000', expect.any(Number)); // + undo-merge key
 });
 
 // The pill lives inside a <label>; a click on non-interactive content in a label
